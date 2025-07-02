@@ -84,7 +84,10 @@ const ChallengeParticipants = () => {
         }
       }
 
-      const challengeData = challengeResult.data
+      // 챌린지 자동 종료 체크 및 상태 업데이트
+      const statusCheckResult = await challengeAPI.checkAndUpdateChallengeStatus(challengeResult.data.id)
+      const challengeData = statusCheckResult.data || challengeResult.data
+      
       setChallenge(challengeData)
 
       // 미션 목록 로드

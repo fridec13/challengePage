@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Target, Clock, Flame, Users, CheckCircle, Plus, Minus, BarChart3, Eye } from 'lucide-react'
+import { ArrowLeft, Target, Clock, Flame, Users, CheckCircle, Plus, Minus, BarChart3, Eye, Trophy } from 'lucide-react'
 import { challengeAPI, missionAPI } from '../lib/supabase'
 
 interface Challenge {
@@ -85,7 +85,10 @@ const ChallengeMain = () => {
         }
       }
 
-      const challengeData = challengeResult.data
+      // 챌린지 자동 종료 체크 및 상태 업데이트
+      const statusCheckResult = await challengeAPI.checkAndUpdateChallengeStatus(challengeResult.data.id)
+      const challengeData = statusCheckResult.data || challengeResult.data
+      
       setChallenge(challengeData)
 
       // 미션 목록 로드
@@ -116,6 +119,12 @@ const ChallengeMain = () => {
 
   const handleMissionComplete = async (mission: Mission, value: any) => {
     if (!challenge) return
+    
+    // 종료된 챌린지에서는 미션 입력 차단
+    if (challenge.status === 'completed') {
+      alert('이미 종료된 챌린지입니다')
+      return
+    }
     
     setIsSubmitting(true)
     try {
@@ -235,7 +244,15 @@ const ChallengeMain = () => {
           >
             <ArrowLeft className="w-6 h-6 text-gray-600" />
           </button>
-          <h1 className="text-lg font-bold text-gray-800 truncate mx-4">{challenge.title}</h1>
+          <div className="flex-1 mx-4">
+            <h1 className="text-lg font-bold text-gray-800 truncate">{challenge.title}</h1>
+            {challenge.status === 'completed' && (
+              <div className="text-xs text-blue-600 font-medium">📅 챌린지 종료</div>
+            )}
+            {challenge.status === 'planning' && (
+              <div className="text-xs text-yellow-600 font-medium">⏳ 시작 대기</div>
+            )}
+          </div>
           <div className="flex space-x-2">
             <button
               onClick={() => navigate(`/challenge/${id}/overview`)}
@@ -333,7 +350,25 @@ const ChallengeMain = () => {
             </div>
 
             {/* 미션 입력 UI */}
-            {currentMission.mission_type === 'boolean' ? (
+            {challenge.status === 'completed' ? (
+              <div className="text-center py-8 bg-blue-50 rounded-xl">
+                <Trophy className="w-16 h-16 text-blue-500 mx-auto mb-4" />
+                <p className="text-blue-600 font-semibold mb-2">챌린지 종료!</p>
+                <p className="text-sm text-gray-600">이 챌린지는 이미 종료되었습니다</p>
+                <button
+                  onClick={() => navigate(`/challenge/${id}/ranking`)}
+                  className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors"
+                >
+                  최종 순위 보기
+                </button>
+              </div>
+            ) : challenge.status === 'planning' ? (
+              <div className="text-center py-8 bg-yellow-50 rounded-xl">
+                <Clock className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
+                <p className="text-yellow-600 font-semibold mb-2">시작 대기 중</p>
+                <p className="text-sm text-gray-600">챌린지 시작일까지 기다려주세요</p>
+              </div>
+            ) : currentMission.mission_type === 'boolean' ? (
               <BooleanMissionInput
                 mission={currentMission}
                 isCompleted={isMissionCompleted(currentMission.id)}

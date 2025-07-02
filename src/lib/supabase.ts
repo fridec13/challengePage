@@ -186,6 +186,68 @@ export const challengeAPI = {
       .single()
 
     return { data, error }
+  },
+
+  // 챌린지 자동 종료 체크 및 업데이트
+  async checkAndUpdateChallengeStatus(challengeId: string) {
+    // 먼저 챌린지 정보 가져오기
+    const { data: challenge, error: fetchError } = await supabase
+      .from('challenges')
+      .select('*')
+      .eq('id', challengeId)
+      .single()
+
+    if (fetchError || !challenge) {
+      return { data: null, error: fetchError }
+    }
+
+    // 현재 날짜와 종료일 비교
+    const today = new Date()
+    const endDate = new Date(challenge.end_date)
+    
+    // 오늘이 종료일을 지났고, 상태가 아직 active라면 completed로 변경
+    if (today > endDate && challenge.status === 'active') {
+      const { error } = await supabase
+        .from('challenges')
+        .update({ 
+          status: 'completed',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', challengeId)
+        .select()
+        .single()
+
+      if (error) {
+        return { data: challenge, error }
+      }
+
+      // 업데이트된 챌린지 반환
+      return { data: { ...challenge, status: 'completed' }, error: null }
+    }
+
+    // 시작일이 되었는데 아직 planning 상태라면 active로 변경
+    const startDate = new Date(challenge.start_date)
+    if (today >= startDate && challenge.status === 'planning') {
+      const { error } = await supabase
+        .from('challenges')
+        .update({ 
+          status: 'active',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', challengeId)
+        .select()
+        .single()
+
+      if (error) {
+        return { data: challenge, error }
+      }
+
+      // 업데이트된 챌린지 반환
+      return { data: { ...challenge, status: 'active' }, error: null }
+    }
+
+    // 상태 변경이 필요없으면 기존 챌린지 그대로 반환
+    return { data: challenge, error: null }
   }
 }
 
