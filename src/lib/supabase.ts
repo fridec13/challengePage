@@ -259,12 +259,12 @@ export const challengeAPI = {
 
   // 사용자의 완료된 챌린지 목록 조회 (아카이브용)
   async getUserCompletedChallenges(userId: string) {
-    // 단계별로 나누어서 쿼리 실행
-    const { data: participantData, error: participantError } = await supabase
+    // 올바른 Supabase 관계형 쿼리 구문 사용
+    const { data, error } = await supabase
       .from('challenge_participants')
       .select(`
         *,
-        challenges:challenge_id (
+        challenges!challenge_id (
           id,
           title,
           description,
@@ -274,42 +274,17 @@ export const challengeAPI = {
           max_participants,
           entry_fee,
           prize_distribution,
-          creator_id
+          creator_id,
+          users!creator_id (
+            nickname
+          )
         )
       `)
       .eq('user_id', userId)
       .eq('status', 'active')
       .eq('challenges.status', 'completed')
 
-    if (participantError) {
-      return { data: null, error: participantError }
-    }
-
-    // 생성자 닉네임을 별도로 조회
-    if (participantData && participantData.length > 0) {
-      for (const participant of participantData) {
-        if (participant.challenges?.creator_id) {
-          const { data: creatorData } = await supabase
-            .from('users')
-            .select('nickname')
-            .eq('id', participant.challenges.creator_id)
-            .single()
-          
-          if (creatorData) {
-            (participant.challenges as any).creator_nickname = creatorData.nickname
-          }
-        }
-      }
-    }
-
-    // 종료일 기준으로 정렬
-    const sortedData = participantData?.sort((a, b) => {
-      const dateA = new Date(a.challenges?.end_date || '')
-      const dateB = new Date(b.challenges?.end_date || '')
-      return dateB.getTime() - dateA.getTime()
-    })
-
-    return { data: sortedData, error: null }
+    return { data, error }
   },
 
   // 챌린지 최종 결과 조회
@@ -332,10 +307,20 @@ export const challengeAPI = {
       return { data: null, error: missionsResult.error }
     }
 
-    // 모든 미션 로그 (단순 쿼리로 수정)
+    // 모든 미션 로그
     const { data: allLogs, error: logsError } = await supabase
       .from('mission_logs')
-      .select('*')
+      .select(`
+        *,
+        missions!mission_id (
+          title,
+          mission_type
+        ),
+        users!user_id (
+          nickname,
+          profile_id
+        )
+      `)
       .eq('challenge_id', challengeId)
 
     if (logsError) {
@@ -402,7 +387,13 @@ export const missionAPI = {
   async getUserMissionLogs(challengeId: string, userId: string, startDate?: string, endDate?: string) {
     let query = supabase
       .from('mission_logs')
-      .select('*')
+      .select(`
+        *,
+        missions!mission_id (
+          title,
+          mission_type
+        )
+      `)
       .eq('challenge_id', challengeId)
       .eq('user_id', userId)
 
@@ -418,7 +409,14 @@ export const missionAPI = {
   async getDayMissionLogs(challengeId: string, userId: string, date: string) {
     const { data, error } = await supabase
       .from('mission_logs')
-      .select('*')
+      .select(`
+        *,
+        missions!mission_id (
+          id,
+          title,
+          mission_type
+        )
+      `)
       .eq('challenge_id', challengeId)
       .eq('user_id', userId)
       .eq('log_date', date)
