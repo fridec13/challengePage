@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Target, Clock, Flame, Users, CheckCircle, Plus, Minus, BarChart3, Eye, Trophy } from 'lucide-react'
 import { challengeAPI, missionAPI } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
+import { ScoringSystem } from '../lib/scoring'
 
 interface Challenge {
   id: string
@@ -56,6 +57,7 @@ const ChallengeMain = () => {
   const [missions, setMissions] = useState<Mission[]>([])
   const [participants, setParticipants] = useState<Participant[]>([])
   const [todayLogs, setTodayLogs] = useState<MissionLog[]>([])
+  const [userStreak, setUserStreak] = useState({ current: 0, max: 0 })
   const [currentMissionIndex, setCurrentMissionIndex] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -110,6 +112,9 @@ const ChallengeMain = () => {
         if (logsResult.data) {
           setTodayLogs(logsResult.data)
         }
+
+        // 사용자의 연속 달성일 계산
+        await calculateUserStreak(challengeData.id, user.id, challengeData, missionsResult.data || [])
       }
 
     } catch (error) {
@@ -149,6 +154,11 @@ const ChallengeMain = () => {
       const logsResult = await missionAPI.getDayMissionLogs(challenge.id, user.id!, today)
       if (logsResult.data) {
         setTodayLogs(logsResult.data)
+      }
+
+      // 연속 달성일 재계산
+      if (challenge && missions.length > 0) {
+        await calculateUserStreak(challenge.id, user.id!, challenge, missions)
       }
 
     } catch (error) {
@@ -195,15 +205,47 @@ const ChallengeMain = () => {
     return Math.min(passedMs / totalMs * 100, 100)
   }
 
-  const getConsecutiveDays = () => {
-    // 챌린지가 시작하지 않았다면 0 반환
-    if (!challenge || challenge.status === 'planning') {
-      return 0
+  // 사용자 연속 달성일 계산 함수
+  const calculateUserStreak = async (challengeId: string, userId: string, challengeData: Challenge, missionsData: Mission[]) => {
+    try {
+      // 챌린지가 시작하지 않았다면 0으로 설정
+      if (challengeData.status === 'planning') {
+        setUserStreak({ current: 0, max: 0 })
+        return
+      }
+
+      // 사용자의 모든 미션 로그 가져오기
+      const allLogsResult = await missionAPI.getUserMissionLogs(challengeId, userId)
+      if (allLogsResult.error || !allLogsResult.data) {
+        setUserStreak({ current: 0, max: 0 })
+        return
+      }
+
+      // ScoringSystem으로 연속 달성일 계산
+      const scoringSystem = new ScoringSystem(
+        missionsData,
+        challengeData.scoring_method,
+        challengeData.start_date,
+        challengeData.end_date
+      )
+
+      const userScore = scoringSystem.calculateRankings(allLogsResult.data, [userId])[0]
+      if (userScore) {
+        setUserStreak({ 
+          current: userScore.current_streak, 
+          max: userScore.max_streak 
+        })
+      } else {
+        setUserStreak({ current: 0, max: 0 })
+      }
+    } catch (error) {
+      console.error('연속 달성일 계산 실패:', error)
+      setUserStreak({ current: 0, max: 0 })
     }
-    
-    // 실제로는 API에서 연속 달성일을 가져와야 하지만
-    // 현재는 기본값 0 반환 (추후 구현 예정)
-    return 0
+  }
+
+  const getConsecutiveDays = () => {
+    return userStreak.current
   }
 
   const getTotalCompletions = () => {
