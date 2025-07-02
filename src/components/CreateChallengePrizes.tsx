@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { ArrowLeft, DollarSign, Users, Trophy, Zap, Check, Copy } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { challengeAPI, missionAPI } from '../lib/supabase'
+import { useAuth } from '../contexts/AuthContext'
 
 interface Mission {
   id: string
@@ -36,6 +37,7 @@ interface PrizeSettings {
 
 const CreateChallengePrizes = () => {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [basicInfo, setBasicInfo] = useState<ChallengeBasicInfo | null>(null)
   const [missions, setMissions] = useState<Mission[]>([])
   const [scoring, setScoring] = useState<ScoringCriteria | null>(null)
@@ -120,7 +122,10 @@ const CreateChallengePrizes = () => {
   }
 
   const handleCreateChallenge = async () => {
-    if (!basicInfo || !missions || !scoring) return
+    if (!basicInfo || !missions || !scoring || !user?.id) {
+      alert('로그인이 필요합니다.')
+      return
+    }
     
     setIsCreating(true)
     
@@ -129,7 +134,7 @@ const CreateChallengePrizes = () => {
       const challengeData = {
         title: basicInfo.title,
         description: basicInfo.description,
-        creator_id: JSON.parse(localStorage.getItem('user') || '{}').id,
+        creator_id: user.id,
         max_participants: basicInfo.maxParticipants,
         start_date: basicInfo.startDate,
         duration_days: basicInfo.durationDays,
@@ -161,12 +166,6 @@ const CreateChallengePrizes = () => {
           success_conditions: mission.successConditions,
           order_index: missions.indexOf(mission)
         })
-      }
-      
-      // 생성자를 참여자로 자동 추가
-      const user = JSON.parse(localStorage.getItem('user') || '{}')
-      if (user.id) {
-        await challengeAPI.joinChallenge(challengeResult.data.id, user.id)
       }
       
       setChallengeCode(challengeResult.data.challenge_code)
