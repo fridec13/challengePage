@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react'
 import type { ReactNode } from 'react'
+import { setCurrentUser, syncAuthSession } from '../lib/supabase'
 
 interface User {
   id: string
@@ -40,7 +41,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     const savedUser = localStorage.getItem('challengeUser')
     if (savedUser) {
       try {
-        setUser(JSON.parse(savedUser))
+        const userData = JSON.parse(savedUser)
+        setUser(userData)
+        // Supabase Auth와 연동
+        syncAuthSession(userData.id)
       } catch (error) {
         console.error('Failed to parse saved user:', error)
         localStorage.removeItem('challengeUser')
@@ -52,11 +56,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const login = (userData: User) => {
     setUser(userData)
     localStorage.setItem('challengeUser', JSON.stringify(userData))
+    // Supabase Auth와 연동
+    setCurrentUser(userData.id)
+    syncAuthSession(userData.id)
   }
 
   const logout = () => {
     setUser(null)
     localStorage.removeItem('challengeUser')
+    // Supabase Auth 세션도 정리
+    setCurrentUser('')
   }
 
   const value: AuthContextType = {

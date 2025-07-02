@@ -13,6 +13,49 @@ if (!supabaseUrl || !supabaseKey) {
 
 export const supabase = createClient(supabaseUrl, supabaseKey)
 
+// 사용자 인증 상태 관리
+let currentUserId: string | null = null
+
+// 현재 사용자 ID 설정 (RLS용)
+export const setCurrentUser = (userId: string) => {
+  currentUserId = userId
+}
+
+// 현재 사용자 ID 가져오기
+export const getCurrentUser = () => currentUserId
+
+// Supabase Auth와 연동 (백그라운드 익명 로그인)
+export const syncAuthSession = async (userId: string) => {
+  try {
+    // 이미 로그인되어 있으면 스킵
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      setCurrentUser(userId)
+      return true
+    }
+
+    // 익명 로그인으로 세션 생성
+    const { data, error } = await supabase.auth.signInAnonymously({
+      options: {
+        data: {
+          custom_user_id: userId
+        }
+      }
+    })
+
+    if (error) {
+      console.warn('Anonymous auth failed:', error)
+      return false
+    }
+
+    setCurrentUser(userId)
+    return true
+  } catch (error) {
+    console.warn('Auth sync failed:', error)
+    return false
+  }
+}
+
 // 타입 정의
 export interface Challenge {
   id: string
@@ -71,6 +114,11 @@ export const authAPI = {
       ])
       .select()
 
+    // 회원가입 성공 시 Supabase Auth와 연동
+    if (data && data[0] && !error) {
+      await syncAuthSession(data[0].id)
+    }
+
     return { data, error }
   },
 
@@ -82,6 +130,11 @@ export const authAPI = {
       .eq('nickname', nickname)
       .eq('pin_code', pinCode)
       .single()
+
+    // 로그인 성공 시 Supabase Auth와 연동
+    if (data && !error) {
+      await syncAuthSession(data.id)
+    }
 
     return { data, error }
   },
