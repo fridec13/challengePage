@@ -9,6 +9,7 @@ interface Challenge {
   id: string
   title: string
   description?: string
+  challenge_code: string
   start_date: string
   duration_days: number
   end_date: string
@@ -291,7 +292,7 @@ const ChallengeMain = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      <div className="container mx-auto px-4 py-6 max-w-md">
+      <div className="container mx-auto px-4 py-6 max-w-4xl">
         {/* 헤더 */}
         <div className="flex items-center justify-between mb-6">
           <button
@@ -301,7 +302,12 @@ const ChallengeMain = () => {
             <ArrowLeft className="w-6 h-6 text-gray-600" />
           </button>
           <div className="flex-1 mx-4">
-            <h1 className="text-lg font-bold text-gray-800 truncate">{challenge.title}</h1>
+            <div className="flex items-center space-x-2">
+              <h1 className="text-lg font-bold text-gray-800 truncate">{challenge.title}</h1>
+              <span className="text-sm bg-gray-100 text-gray-600 px-2 py-1 rounded-md font-mono">
+                {challenge.challenge_code}
+              </span>
+            </div>
             {challenge.status === 'completed' && (
               <div className="text-xs text-blue-600 font-medium">📅 챌린지 종료</div>
             )}
@@ -327,48 +333,86 @@ const ChallengeMain = () => {
           </div>
         </div>
 
-        {/* 24시간 진행률 */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
-          <div className="text-center mb-4">
-            <h2 className="text-2xl font-bold text-gray-800">오늘의 진행률</h2>
-            <p className="text-gray-600">오늘 하루가 {Math.round(todayProgress)}% 지났어요</p>
-          </div>
-          
-          <div className="relative">
-            <div className="w-full h-4 bg-gray-200 rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-gradient-to-r from-blue-500 to-indigo-600 transition-all duration-1000 ease-out"
-                style={{ width: `${todayProgress}%` }}
-              ></div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          {/* 24시간 진행률 */}
+          <div className="bg-white rounded-2xl shadow-lg p-6">
+            <div className="text-center mb-4">
+              <h2 className="text-2xl font-bold text-gray-800">오늘의 진행률</h2>
+              <p className="text-gray-600">오늘 하루가 {Math.round(todayProgress)}% 지났어요</p>
             </div>
-            <div className="mt-2 flex justify-between text-xs text-gray-500">
-              <span>00:00</span>
-              <span>{new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}</span>
-              <span>24:00</span>
+            
+            <div className="relative">
+              <div className="w-full h-4 bg-gray-200 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-gradient-to-r from-blue-500 to-indigo-600 transition-all duration-1000 ease-out"
+                  style={{ width: `${todayProgress}%` }}
+                ></div>
+              </div>
+              <div className="mt-2 flex justify-between text-xs text-gray-500">
+                <span>00:00</span>
+                <span>{new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}</span>
+                <span>24:00</span>
+              </div>
+            </div>
+
+            <div className="mt-4 grid grid-cols-3 gap-4 text-center">
+              <div className="bg-green-50 rounded-lg p-3">
+                <div className="flex items-center justify-center mb-1">
+                  <Flame className="w-4 h-4 text-orange-600" />
+                </div>
+                <p className="text-sm text-gray-600">연속</p>
+                <p className="text-lg font-bold text-orange-600">{getConsecutiveDays()}일</p>
+              </div>
+              <div className="bg-blue-50 rounded-lg p-3">
+                <div className="flex items-center justify-center mb-1">
+                  <Target className="w-4 h-4 text-blue-600" />
+                </div>
+                <p className="text-sm text-gray-600">총 달성</p>
+                <p className="text-lg font-bold text-blue-600">{getTotalCompletions()}회</p>
+              </div>
+              <div className="bg-purple-50 rounded-lg p-3">
+                <div className="flex items-center justify-center mb-1">
+                  <Clock className="w-4 h-4 text-purple-600" />
+                </div>
+                <p className="text-sm text-gray-600">챌린지</p>
+                <p className="text-lg font-bold text-purple-600">{Math.round(dayProgress)}%</p>
+              </div>
             </div>
           </div>
 
-          <div className="mt-4 grid grid-cols-3 gap-4 text-center">
-            <div className="bg-green-50 rounded-lg p-3">
-              <div className="flex items-center justify-center mb-1">
-                <Flame className="w-4 h-4 text-orange-600" />
+          {/* 참여자 현황 */}
+          <div className="bg-white rounded-2xl shadow-lg p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-800">참여자 현황</h3>
+              <div className="flex items-center space-x-1 text-sm text-gray-600">
+                <Users className="w-4 h-4" />
+                <span>{participants.length}명 참여</span>
               </div>
-              <p className="text-sm text-gray-600">연속</p>
-              <p className="text-lg font-bold text-orange-600">{getConsecutiveDays()}일</p>
             </div>
-            <div className="bg-blue-50 rounded-lg p-3">
-              <div className="flex items-center justify-center mb-1">
-                <Target className="w-4 h-4 text-blue-600" />
-              </div>
-              <p className="text-sm text-gray-600">총 달성</p>
-              <p className="text-lg font-bold text-blue-600">{getTotalCompletions()}회</p>
-            </div>
-            <div className="bg-purple-50 rounded-lg p-3">
-              <div className="flex items-center justify-center mb-1">
-                <Clock className="w-4 h-4 text-purple-600" />
-              </div>
-              <p className="text-sm text-gray-600">챌린지</p>
-              <p className="text-lg font-bold text-purple-600">{Math.round(dayProgress)}%</p>
+
+            <div className="space-y-3 max-h-64 overflow-y-auto">
+              {participants.map((participant, index) => (
+                <div key={participant.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center space-x-3">
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold ${
+                      index === 0 ? 'bg-yellow-500' :
+                      index === 1 ? 'bg-gray-400' :
+                      index === 2 ? 'bg-orange-400' : 'bg-blue-400'
+                    }`}>
+                      {index + 1}
+                    </div>
+                    <div>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-lg">{getProfileEmoji(participant.users.profile_id)}</span>
+                        <span className="font-medium text-gray-800">{participant.users.nickname}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-sm text-gray-500">
+                    {participant.user_id === user?.id ? '나' : `${index + 1}위`}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -450,47 +494,7 @@ const ChallengeMain = () => {
           </div>
         </div>
 
-        {/* 순위 정보 */}
-        <div className="bg-white rounded-2xl shadow-lg p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-800">참여자 현황</h3>
-            <div className="flex items-center space-x-1 text-sm text-gray-600">
-              <Users className="w-4 h-4" />
-              <span>{participants.length}명 참여</span>
-            </div>
-          </div>
 
-          <div className="space-y-3">
-            {participants.map((participant, index) => (
-              <div key={participant.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <div className={`w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold ${
-                    index === 0 ? 'bg-yellow-500' :
-                    index === 1 ? 'bg-gray-400' :
-                    index === 2 ? 'bg-amber-600' : 'bg-gray-300'
-                  }`}>
-                    {index + 1}
-                  </div>
-                  <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
-                    {getProfileEmoji(participant.users.profile_id)}
-                  </div>
-                  <span className="font-medium text-gray-800">
-                    {participant.users.nickname}
-                    {user?.id && participant.user_id === user.id && (
-                      <span className="text-indigo-600 text-sm ml-1">(나)</span>
-                    )}
-                  </span>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm text-gray-600">오늘</p>
-                  <p className="font-semibold text-green-600">
-                    {user?.id && participant.user_id === user.id ? todayLogs.length : Math.floor(Math.random() * missions.length)}/{missions.length}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
       </div>
     </div>
   )
