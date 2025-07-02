@@ -1,8 +1,74 @@
 import { useState } from 'react'
-import { ArrowLeft, Eye, EyeOff } from 'lucide-react'
+import { ArrowLeft, Eye, EyeOff, Delete, RotateCcw } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { authAPI } from '../lib/supabase'
+
+// 숫자 키패드 컴포넌트
+const NumericKeypad = ({ 
+  onNumberClick, 
+  onBackspace, 
+  onClear 
+}: { 
+  onNumberClick: (num: string) => void
+  onBackspace: () => void
+  onClear: () => void
+}) => {
+  const numbers = [
+    ['1', '2', '3'],
+    ['4', '5', '6'],
+    ['7', '8', '9'],
+  ]
+
+  return (
+    <div className="mt-4 bg-gray-50 p-4 rounded-lg">
+      <div className="grid grid-cols-3 gap-3 mb-3">
+        {numbers.map((row) =>
+          row.map((num) => (
+            <button
+              key={num}
+              type="button"
+              onClick={() => onNumberClick(num)}
+              className="h-12 bg-white hover:bg-indigo-50 border border-gray-200 rounded-lg font-semibold text-lg text-gray-700 hover:text-indigo-600 transition-colors active:scale-95"
+            >
+              {num}
+            </button>
+          ))
+        )}
+      </div>
+      
+      <div className="grid grid-cols-3 gap-3">
+        <button
+          type="button"
+          onClick={onBackspace}
+          className="h-12 bg-white hover:bg-red-50 border border-gray-200 rounded-lg font-semibold text-red-600 transition-colors active:scale-95 flex items-center justify-center"
+        >
+          <Delete className="w-5 h-5" />
+        </button>
+        
+        <button
+          type="button"
+          onClick={() => onNumberClick('0')}
+          className="h-12 bg-white hover:bg-indigo-50 border border-gray-200 rounded-lg font-semibold text-lg text-gray-700 hover:text-indigo-600 transition-colors active:scale-95"
+        >
+          0
+        </button>
+        
+        <button
+          type="button"
+          onClick={onClear}
+          className="h-12 bg-white hover:bg-orange-50 border border-gray-200 rounded-lg font-semibold text-orange-600 transition-colors active:scale-95 flex items-center justify-center"
+        >
+          <RotateCcw className="w-5 h-5" />
+        </button>
+      </div>
+      
+      <div className="text-xs text-gray-500 text-center mt-2">
+        <Delete className="w-3 h-3 inline mr-1" />지우기 · 0 · <RotateCcw className="w-3 h-3 inline mx-1" />전체삭제
+      </div>
+    </div>
+  )
+}
 
 const LoginForm = () => {
   const navigate = useNavigate()
@@ -25,6 +91,23 @@ const LoginForm = () => {
     } else {
       setFormData(prev => ({ ...prev, [name]: value }))
     }
+  }
+
+  // 키패드 숫자 클릭 핸들러
+  const handleNumberClick = (num: string) => {
+    if (formData.pinCode.length < 4) {
+      setFormData(prev => ({ ...prev, pinCode: prev.pinCode + num }))
+    }
+  }
+
+  // 키패드 백스페이스 핸들러
+  const handleBackspace = () => {
+    setFormData(prev => ({ ...prev, pinCode: prev.pinCode.slice(0, -1) }))
+  }
+
+  // 키패드 전체 삭제 핸들러
+  const handleClear = () => {
+    setFormData(prev => ({ ...prev, pinCode: '' }))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -95,8 +178,8 @@ const LoginForm = () => {
                   name="pinCode"
                   value={formData.pinCode}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  placeholder="4자리 숫자"
+                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-center text-lg tracking-widest"
+                  placeholder="••••"
                   maxLength={4}
                   required
                 />
@@ -108,6 +191,13 @@ const LoginForm = () => {
                   {showPin ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
+              
+              {/* 숫자 키패드 */}
+              <NumericKeypad 
+                onNumberClick={handleNumberClick}
+                onBackspace={handleBackspace}
+                onClear={handleClear}
+              />
             </div>
 
             {error && (
