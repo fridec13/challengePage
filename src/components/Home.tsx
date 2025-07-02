@@ -1,68 +1,49 @@
-import { useState } from 'react'
-import { useAuth } from '../contexts/AuthContext'
-import LoginForm from './LoginForm'
-import SignupForm from './SignupForm'
-import Dashboard from './Dashboard'
+import { useNavigate } from 'react-router-dom'
 
-const Home = () => {
-  const { isAuthenticated, loading } = useAuth()
-  const [currentView, setCurrentView] = useState<'home' | 'login' | 'signup'>('home')
+export default function Home() {
+  const navigate = useNavigate()
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 font-pretendard flex items-center justify-center">
-        <div className="text-2xl text-gray-600">로딩 중...</div>
-      </div>
-    )
-  }
-
-  // 로그인된 사용자는 대시보드로
-  if (isAuthenticated) {
-    return <Dashboard />
-  }
-
-  // 로그인 폼
-  if (currentView === 'login') {
-    return <LoginForm onBack={() => setCurrentView('home')} />
-  }
-
-  // 회원가입 폼
-  if (currentView === 'signup') {
-    return <SignupForm onBack={() => setCurrentView('home')} />
-  }
-
-  // 홈 화면
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 font-pretendard">
-      <div className="flex flex-col items-center justify-center min-h-screen px-4">
-        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold text-gray-800 mb-2">
-              Challenge!
-            </h1>
-            <p className="text-gray-600 text-lg">
-              마음대로 설정하고, 기록하세요!
-            </p>
-          </div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col">
+      {/* Header */}
+      <div className="flex-1 flex flex-col justify-center items-center px-6 py-12">
+        <div className="text-center max-w-md mx-auto">
+          {/* Main Title */}
+          <h1 className="text-6xl md:text-7xl font-bold text-gray-900 mb-4">
+            Challenge!
+          </h1>
           
+          {/* Subtitle */}
+          <p className="text-xl md:text-2xl text-gray-600 mb-12 leading-relaxed">
+            마음대로 설정하고,<br />
+            기록하세요!
+          </p>
+          
+          {/* Action Buttons */}
           <div className="space-y-4">
-            <button 
-              onClick={() => setCurrentView('login')}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200"
+            <button
+              onClick={() => navigate('/login')}
+              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-4 px-8 rounded-2xl text-lg transition-colors duration-200 shadow-lg hover:shadow-xl"
             >
               로그인
             </button>
-            <button 
-              onClick={() => setCurrentView('signup')}
-              className="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-3 px-6 rounded-lg transition-colors duration-200"
+            
+            <button
+              onClick={() => navigate('/signup')}
+              className="w-full bg-white hover:bg-gray-50 text-indigo-600 font-semibold py-4 px-8 rounded-2xl text-lg border-2 border-indigo-600 transition-colors duration-200"
             >
-              새로시작하기
+              새로 시작하기
             </button>
           </div>
         </div>
       </div>
+      
+      {/* Footer */}
+      <div className="pb-8 text-center">
+        <p className="text-gray-500 text-sm">
+          친구들과 함께하는 챌린지 플랫폼
+        </p>
+      </div>
     </div>
   )
-}
-
-export default Home 
+} 

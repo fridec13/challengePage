@@ -1,13 +1,11 @@
 import { useState } from 'react'
 import { ArrowLeft, Eye, EyeOff } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { authAPI } from '../lib/supabase'
 
-interface LoginFormProps {
-  onBack: () => void
-}
-
-const LoginForm = ({ onBack }: LoginFormProps) => {
+const LoginForm = () => {
+  const navigate = useNavigate()
   const { login } = useAuth()
   const [formData, setFormData] = useState({
     nickname: '',
@@ -48,6 +46,7 @@ const LoginForm = ({ onBack }: LoginFormProps) => {
       }
 
       login(data)
+      navigate('/dashboard')
     } catch (err) {
       setError('로그인 중 오류가 발생했습니다.')
       console.error('Login error:', err)
@@ -57,12 +56,12 @@ const LoginForm = ({ onBack }: LoginFormProps) => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 font-pretendard">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       <div className="flex flex-col items-center justify-center min-h-screen px-4">
         <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full">
           <div className="flex items-center mb-6">
             <button
-              onClick={onBack}
+              onClick={() => navigate('/')}
               className="p-2 hover:bg-gray-100 rounded-full transition-colors"
             >
               <ArrowLeft className="w-5 h-5 text-gray-600" />
@@ -80,7 +79,7 @@ const LoginForm = ({ onBack }: LoginFormProps) => {
                 name="nickname"
                 value={formData.nickname}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 placeholder="닉네임을 입력하세요"
                 required
               />
@@ -96,7 +95,7 @@ const LoginForm = ({ onBack }: LoginFormProps) => {
                   name="pinCode"
                   value={formData.pinCode}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   placeholder="4자리 숫자"
                   maxLength={4}
                   required
@@ -120,7 +119,7 @@ const LoginForm = ({ onBack }: LoginFormProps) => {
             <button
               type="submit"
               disabled={loading || !formData.nickname || formData.pinCode.length !== 4}
-              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200"
+              className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200"
             >
               {loading ? '로그인 중...' : '로그인'}
             </button>
