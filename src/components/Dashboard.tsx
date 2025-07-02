@@ -1,7 +1,7 @@
 import { LogOut, Plus, Users, Play, Archive, Trophy, Calendar } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
-import { challengeAPI } from '../lib/supabase'
+import { challengeAPI, debugAPI } from '../lib/supabase'
 import { useState, useEffect } from 'react'
 
 // 프로필 아바타 매핑
@@ -51,6 +51,9 @@ const Dashboard = () => {
   const userProfile = profileOptions.find(p => p.id === user?.profile_id) || profileOptions[0]
 
   useEffect(() => {
+    // 데이터베이스 상태 확인
+    debugAPI.checkTables()
+    
     if (user?.id) {
       loadActiveChallenge()
       loadCompletedChallenges()

@@ -150,23 +150,90 @@ export const authAPI = {
   }
 }
 
+// 데이터베이스 상태 확인용 함수
+export const debugAPI = {
+  // 테이블 존재 여부 확인
+  async checkTables() {
+    console.log('=== Database Status Check ===')
+    
+    try {
+      // users 테이블 확인
+      const { data: users, error: usersError } = await supabase
+        .from('users')
+        .select('count')
+        .limit(1)
+      console.log('Users table:', { exists: !usersError, error: usersError })
+
+      // challenges 테이블 확인
+      const { data: challenges, error: challengesError } = await supabase
+        .from('challenges')
+        .select('count')
+        .limit(1)
+      console.log('Challenges table:', { exists: !challengesError, error: challengesError })
+
+      // challenge_participants 테이블 확인
+      const { data: participants, error: participantsError } = await supabase
+        .from('challenge_participants')
+        .select('count')
+        .limit(1)
+      console.log('Challenge_participants table:', { exists: !participantsError, error: participantsError })
+
+      return {
+        allTablesExist: !usersError && !challengesError && !participantsError,
+        details: {
+          users: !usersError,
+          challenges: !challengesError,
+          participants: !participantsError
+        }
+      }
+    } catch (error) {
+      console.error('Database check failed:', error)
+      return { allTablesExist: false, error }
+    }
+  }
+}
+
 // 챌린지 관련 API 함수들
 export const challengeAPI = {
   // 챌린지 생성
   async createChallenge(challengeData: Omit<Challenge, 'id' | 'challenge_code' | 'end_date' | 'created_at' | 'updated_at'>) {
-    // 챌린지 코드 생성
-    const { data: codeData, error: codeError } = await supabase.rpc('generate_challenge_code')
-    if (codeError) return { data: null, error: codeError }
+    // 간단한 6자리 챌린지 코드 생성 (JavaScript로 직접 생성)
+    const generateSimpleCode = () => {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+      let result = ''
+      for (let i = 0; i < 6; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length))
+      }
+      return result
+    }
+
+    let challengeCode = generateSimpleCode()
+    
+    // 중복 체크 (최대 5번 시도)
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const { data: existing } = await supabase
+        .from('challenges')
+        .select('id')
+        .eq('challenge_code', challengeCode)
+        .single()
+      
+      if (!existing) break // 중복되지 않으면 사용
+      challengeCode = generateSimpleCode() // 중복되면 새로 생성
+    }
+
+    console.log('Generated challenge code:', challengeCode)
 
     // 챌린지 생성
     const { data: challengeData_result, error: challengeError } = await supabase
       .from('challenges')
       .insert([{
         ...challengeData,
-        challenge_code: codeData
+        challenge_code: challengeCode
       }])
       .select()
       .single()
+
+    console.log('Challenge creation result:', { data: challengeData_result, error: challengeError })
 
     if (challengeError) return { data: null, error: challengeError }
 
@@ -178,6 +245,8 @@ export const challengeAPI = {
         user_id: challengeData.creator_id,
         status: 'active'
       }])
+
+    console.log('Participant creation result:', { error: participantError })
 
     if (participantError) {
       console.warn('Failed to add creator as participant:', participantError)
