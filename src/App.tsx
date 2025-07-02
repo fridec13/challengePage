@@ -4,6 +4,7 @@ import Home from './components/Home'
 import LoginForm from './components/LoginForm'
 import SignupForm from './components/SignupForm'
 import Dashboard from './components/Dashboard'
+import CreateChallenge from './components/CreateChallenge'
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
           <Route path="/login" element={<LoginForm />} />
           <Route path="/signup" element={<SignupForm />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/create-challenge" element={<CreateChallenge />} />
         </Routes>
       </Router>
     </AuthProvider>
