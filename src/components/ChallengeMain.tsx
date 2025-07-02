@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Target, Clock, Flame, Users, CheckCircle, Plus, Minus } from 'lucide-react'
+import { ArrowLeft, Target, Clock, Flame, Users, CheckCircle, Plus, Minus, BarChart3, Eye } from 'lucide-react'
 import { challengeAPI, missionAPI } from '../lib/supabase'
 
 interface Challenge {
@@ -236,7 +236,22 @@ const ChallengeMain = () => {
             <ArrowLeft className="w-6 h-6 text-gray-600" />
           </button>
           <h1 className="text-lg font-bold text-gray-800 truncate mx-4">{challenge.title}</h1>
-          <div className="w-8"></div>
+          <div className="flex space-x-2">
+            <button
+              onClick={() => navigate(`/challenge/${id}/overview`)}
+              className="p-2 hover:bg-white/50 rounded-full transition-colors"
+              title="챌린지 현황"
+            >
+              <Eye className="w-6 h-6 text-gray-600" />
+            </button>
+            <button
+              onClick={() => navigate(`/challenge/${id}/participants`)}
+              className="p-2 hover:bg-white/50 rounded-full transition-colors"
+              title="참여자 현황"
+            >
+              <BarChart3 className="w-6 h-6 text-gray-600" />
+            </button>
+          </div>
         </div>
 
         {/* 24시간 진행률 */}
