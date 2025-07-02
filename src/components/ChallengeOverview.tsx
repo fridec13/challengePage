@@ -58,7 +58,7 @@ interface Participant {
 }
 
 const ChallengeOverview = () => {
-  const { id } = useParams<{ id: string }>()
+  const { code: id } = useParams<{ code: string }>()
   const navigate = useNavigate()
   const { user } = useAuth()
   const [challenge, setChallenge] = useState<Challenge | null>(null)

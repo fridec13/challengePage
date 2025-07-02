@@ -61,7 +61,7 @@ interface ParticipantScore {
 }
 
 const ChallengeRanking = () => {
-  const { id } = useParams<{ id: string }>()
+  const { code: id } = useParams<{ code: string }>()
   const navigate = useNavigate()
   const [challenge, setChallenge] = useState<Challenge | null>(null)
   const [participants, setParticipants] = useState<Participant[]>([])

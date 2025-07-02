@@ -30,12 +30,12 @@ function App() {
             <Route path="/create-challenge/scoring" element={<CreateChallengeScoring />} />
             <Route path="/create-challenge/prizes" element={<CreateChallengePrizes />} />
             <Route path="/join-challenge" element={<JoinChallenge />} />
-                      <Route path="/challenge/:id" element={<ChallengeMain />} />
-          <Route path="/challenge/:id/overview" element={<ChallengeOverview />} />
-          <Route path="/challenge/:id/participants" element={<ChallengeParticipants />} />
-                      <Route path="/challenge/:id/rules" element={<ChallengeRules />} />
-            <Route path="/challenge/:id/ranking" element={<ChallengeRanking />} />
-            <Route path="/challenge/:id/results" element={<ChallengeResults />} />
+                      <Route path="/challenge/:code" element={<ChallengeMain />} />
+          <Route path="/challenge/:code/overview" element={<ChallengeOverview />} />
+          <Route path="/challenge/:code/participants" element={<ChallengeParticipants />} />
+                      <Route path="/challenge/:code/rules" element={<ChallengeRules />} />
+            <Route path="/challenge/:code/ranking" element={<ChallengeRanking />} />
+            <Route path="/challenge/:code/results" element={<ChallengeResults />} />
         </Routes>
       </Router>
     </AuthProvider>

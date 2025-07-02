@@ -58,7 +58,7 @@ interface ChallengeResultData {
 }
 
 const ChallengeResults = () => {
-  const { id } = useParams<{ id: string }>()
+  const { code: id } = useParams<{ code: string }>()
   const navigate = useNavigate()
   const { user } = useAuth()
   const [resultData, setResultData] = useState<ChallengeResultData | null>(null)

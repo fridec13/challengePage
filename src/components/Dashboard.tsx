@@ -117,7 +117,8 @@ const Dashboard = () => {
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-gray-800">
-                  안녕하세요, {user?.nickname}님!
+                  안녕하세요,<br className="sm:hidden" />
+                  <span className="sm:ml-1">{user?.nickname}님!</span>
                 </h1>
                 <p className="text-gray-600">챌린지를 시작해보세요</p>
               </div>

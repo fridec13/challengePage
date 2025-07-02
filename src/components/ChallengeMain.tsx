@@ -51,7 +51,7 @@ interface Participant {
 }
 
 const ChallengeMain = () => {
-  const { id } = useParams<{ id: string }>()
+  const { code: id } = useParams<{ code: string }>()
   const navigate = useNavigate()
   const { user } = useAuth()
   const [challenge, setChallenge] = useState<Challenge | null>(null)
@@ -76,17 +76,12 @@ const ChallengeMain = () => {
     
     setIsLoading(true)
     try {
-      // 챌린지 정보 로드 - ID로 시도 후 코드로 폴백
-      let challengeResult = await challengeAPI.getChallengeById(id)
-      
-      if (challengeResult.error || !challengeResult.data) {
-        // ID로 실패하면 코드로 시도
-        challengeResult = await challengeAPI.getChallengeByCode(id)
+      // 챌린지 정보 로드 - 코드로 시도
+      let challengeResult = await challengeAPI.getChallengeByCode(id)
         
-        if (challengeResult.error || !challengeResult.data) {
-          navigate('/dashboard')
-          return
-        }
+      if (challengeResult.error || !challengeResult.data) {
+        navigate('/dashboard')
+        return
       }
 
       // 챌린지 자동 종료 체크 및 상태 업데이트
