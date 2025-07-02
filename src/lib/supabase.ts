@@ -158,16 +158,22 @@ export const challengeAPI = {
 
     let challengeCode = generateSimpleCode()
     
-    // 중복 체크 (최대 5번 시도)
+    // 중복 체크 (최대 5번 시도) - 에러 안전처리
     for (let attempt = 0; attempt < 5; attempt++) {
-      const { data: existing } = await supabase
-        .from('challenges')
-        .select('id')
-        .eq('challenge_code', challengeCode)
-        .single()
-      
-      if (!existing) break // 중복되지 않으면 사용
-      challengeCode = generateSimpleCode() // 중복되면 새로 생성
+      try {
+        const { data: existing, error } = await supabase
+          .from('challenges')
+          .select('id')
+          .eq('challenge_code', challengeCode)
+          .single()
+        
+        // 에러가 발생하거나 중복되지 않으면 사용
+        if (error || !existing) break
+        challengeCode = generateSimpleCode() // 중복되면 새로 생성
+      } catch (checkError) {
+        console.warn('Code duplicate check failed, using current code:', checkError)
+        break // 체크 실패 시 현재 코드 사용
+      }
     }
 
     console.log('Generated challenge code:', challengeCode)
