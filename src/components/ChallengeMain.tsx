@@ -196,13 +196,24 @@ const ChallengeMain = () => {
   }
 
   const getConsecutiveDays = () => {
-    // TODO: 실제 연속 달성일 계산 로직 구현
-    return Math.floor(Math.random() * 10) + 1
+    // 챌린지가 시작하지 않았다면 0 반환
+    if (!challenge || challenge.status === 'planning') {
+      return 0
+    }
+    
+    // 실제로는 API에서 연속 달성일을 가져와야 하지만
+    // 현재는 기본값 0 반환 (추후 구현 예정)
+    return 0
   }
 
   const getTotalCompletions = () => {
-    // TODO: 실제 총 달성 횟수 계산 로직 구현
-    return Math.floor(Math.random() * 20) + 5
+    // 챌린지가 시작하지 않았다면 0 반환
+    if (!challenge || challenge.status === 'planning') {
+      return 0
+    }
+    
+    // 오늘 완료한 미션 수를 반환
+    return todayLogs.length
   }
 
   if (isLoading) {
