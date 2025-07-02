@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Target, Trophy, Users, Clock, Calendar, DollarSign, AlertCircle } from 'lucide-react'
 import { challengeAPI, missionAPI } from '../lib/supabase'
+import { useAuth } from '../contexts/AuthContext'
 
 interface Challenge {
   id: string
@@ -47,12 +48,11 @@ interface Participant {
 const ChallengeRules = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [challenge, setChallenge] = useState<Challenge | null>(null)
   const [missions, setMissions] = useState<Mission[]>([])
   const [participants, setParticipants] = useState<Participant[]>([])
   const [isLoading, setIsLoading] = useState(true)
-
-  const user = JSON.parse(localStorage.getItem('user') || '{}')
 
   useEffect(() => {
     if (id) {
@@ -136,7 +136,7 @@ const ChallengeRules = () => {
   }
 
   const isCreator = () => {
-    return challenge?.creator_id === user.id
+    return challenge?.creator_id === user?.id
   }
 
   if (isLoading) {

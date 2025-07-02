@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Target, Clock, Flame, Users, CheckCircle, Plus, Minus, BarChart3, Eye, Trophy } from 'lucide-react'
 import { challengeAPI, missionAPI } from '../lib/supabase'
+import { useAuth } from '../contexts/AuthContext'
 
 interface Challenge {
   id: string
@@ -50,6 +51,7 @@ interface Participant {
 const ChallengeMain = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [challenge, setChallenge] = useState<Challenge | null>(null)
   const [missions, setMissions] = useState<Mission[]>([])
   const [participants, setParticipants] = useState<Participant[]>([])
@@ -58,7 +60,6 @@ const ChallengeMain = () => {
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const user = JSON.parse(localStorage.getItem('user') || '{}')
   const today = new Date().toISOString().split('T')[0]
 
   useEffect(() => {
@@ -104,9 +105,11 @@ const ChallengeMain = () => {
       }
 
       // 오늘의 미션 로그 로드
-      const logsResult = await missionAPI.getDayMissionLogs(challengeData.id, user.id, today)
-      if (logsResult.data) {
-        setTodayLogs(logsResult.data)
+      if (user?.id) {
+        const logsResult = await missionAPI.getDayMissionLogs(challengeData.id, user.id!, today)
+        if (logsResult.data) {
+          setTodayLogs(logsResult.data)
+        }
       }
 
     } catch (error) {
@@ -118,7 +121,7 @@ const ChallengeMain = () => {
   }
 
   const handleMissionComplete = async (mission: Mission, value: any) => {
-    if (!challenge) return
+    if (!challenge || !user?.id) return
     
     // 종료된 챌린지에서는 미션 입력 차단
     if (challenge.status === 'completed') {
@@ -130,7 +133,7 @@ const ChallengeMain = () => {
     try {
       const result = await missionAPI.logMission({
         mission_id: mission.id,
-        user_id: user.id,
+        user_id: user.id!, // 위에서 이미 체크했으므로 안전
         challenge_id: challenge.id,
         log_date: today,
         value: value,
@@ -143,7 +146,7 @@ const ChallengeMain = () => {
       }
 
       // 오늘의 로그 새로고침
-      const logsResult = await missionAPI.getDayMissionLogs(challenge.id, user.id, today)
+      const logsResult = await missionAPI.getDayMissionLogs(challenge.id, user.id!, today)
       if (logsResult.data) {
         setTodayLogs(logsResult.data)
       }
@@ -420,7 +423,7 @@ const ChallengeMain = () => {
                   </div>
                   <span className="font-medium text-gray-800">
                     {participant.users.nickname}
-                    {participant.user_id === user.id && (
+                    {user?.id && participant.user_id === user.id && (
                       <span className="text-indigo-600 text-sm ml-1">(나)</span>
                     )}
                   </span>
@@ -428,7 +431,7 @@ const ChallengeMain = () => {
                 <div className="text-right">
                   <p className="text-sm text-gray-600">오늘</p>
                   <p className="font-semibold text-green-600">
-                    {participant.user_id === user.id ? todayLogs.length : Math.floor(Math.random() * missions.length)}/{missions.length}
+                    {user?.id && participant.user_id === user.id ? todayLogs.length : Math.floor(Math.random() * missions.length)}/{missions.length}
                   </p>
                 </div>
               </div>

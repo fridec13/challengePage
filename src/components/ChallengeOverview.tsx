@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Calendar, Users, Target, Flame, TrendingUp, Clock, Settings, BarChart3, Trophy } from 'lucide-react'
 import { challengeAPI, missionAPI } from '../lib/supabase'
+import { useAuth } from '../contexts/AuthContext'
 
 interface Challenge {
   id: string
@@ -57,13 +58,12 @@ interface Participant {
 const ChallengeOverview = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [challenge, setChallenge] = useState<Challenge | null>(null)
   const [missions, setMissions] = useState<Mission[]>([])
   const [participants, setParticipants] = useState<Participant[]>([])
   const [myLogs, setMyLogs] = useState<MissionLog[]>([])
   const [isLoading, setIsLoading] = useState(true)
-
-  const user = JSON.parse(localStorage.getItem('user') || '{}')
 
   useEffect(() => {
     if (id) {
@@ -106,9 +106,11 @@ const ChallengeOverview = () => {
       }
 
       // 내 미션 로그 로드 (전체 기간)
-      const logsResult = await missionAPI.getUserMissionLogs(challengeData.id, user.id)
-      if (logsResult.data) {
-        setMyLogs(logsResult.data)
+      if (user?.id) {
+        const logsResult = await missionAPI.getUserMissionLogs(challengeData.id, user.id!)
+        if (logsResult.data) {
+          setMyLogs(logsResult.data)
+        }
       }
 
     } catch (error) {
@@ -326,7 +328,7 @@ const ChallengeOverview = () => {
                   <div className="flex items-center justify-center mb-2">
                     <Clock className="w-6 h-6 text-purple-600" />
                   </div>
-                  <p className="text-2xl font-bold text-purple-600">{participants.findIndex(p => p.user_id === user.id) + 1}</p>
+                  <p className="text-2xl font-bold text-purple-600">{user?.id ? participants.findIndex(p => p.user_id === user.id) + 1 : '-'}</p>
                   <p className="text-sm text-gray-600">현재 순위</p>
                 </div>
               </div>
