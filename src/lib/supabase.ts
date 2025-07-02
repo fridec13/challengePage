@@ -158,7 +158,8 @@ export const challengeAPI = {
     const { data: codeData, error: codeError } = await supabase.rpc('generate_challenge_code')
     if (codeError) return { data: null, error: codeError }
 
-    const { data, error } = await supabase
+    // 챌린지 생성
+    const { data: challengeData_result, error: challengeError } = await supabase
       .from('challenges')
       .insert([{
         ...challengeData,
@@ -167,7 +168,23 @@ export const challengeAPI = {
       .select()
       .single()
 
-    return { data, error }
+    if (challengeError) return { data: null, error: challengeError }
+
+    // 생성자를 자동으로 참여자로 추가
+    const { error: participantError } = await supabase
+      .from('challenge_participants')
+      .insert([{
+        challenge_id: challengeData_result.id,
+        user_id: challengeData.creator_id,
+        status: 'active'
+      }])
+
+    if (participantError) {
+      console.warn('Failed to add creator as participant:', participantError)
+      // 챌린지는 이미 생성되었으므로 에러를 반환하지 않음
+    }
+
+    return { data: challengeData_result, error: null }
   },
 
   // 챌린지 코드로 조회
@@ -194,20 +211,101 @@ export const challengeAPI = {
 
   // 사용자의 현재 참여 챌린지 조회
   async getUserActiveChallenge(userId: string) {
-    const { data, error } = await supabase.rpc('get_user_active_challenge', {
-      user_uuid: userId
-    })
+    try {
+      // RPC 함수 시도
+      const { data, error } = await supabase.rpc('get_user_active_challenge', {
+        user_uuid: userId
+      })
 
-    return { data: data?.[0] || null, error }
+      if (!error && data) {
+        return { data: data?.[0] || null, error: null }
+      }
+    } catch (rpcError) {
+      console.warn('RPC function not available, using fallback query')
+    }
+
+    // Fallback: 일반 쿼리 사용
+    const { data: fallbackData, error: fallbackError } = await supabase
+      .from('challenge_participants')
+      .select(`
+        *,
+        challenges!challenge_id (
+          id,
+          title,
+          status,
+          start_date,
+          end_date
+        )
+      `)
+      .eq('user_id', userId)
+      .eq('status', 'active')
+      .in('challenges.status', ['planning', 'active'])
+      .limit(1)
+      .single()
+
+    if (fallbackError) return { data: null, error: fallbackError }
+
+    // 데이터 형식을 RPC 결과와 맞춤
+    const formattedData = fallbackData?.challenges ? {
+      challenge_id: fallbackData.challenges.id,
+      title: fallbackData.challenges.title,
+      status: fallbackData.challenges.status,
+      start_date: fallbackData.challenges.start_date,
+      end_date: fallbackData.challenges.end_date,
+      joined_at: fallbackData.joined_at
+    } : null
+
+    return { data: formattedData, error: null }
   },
 
   // 챌린지 참여
   async joinChallenge(challengeId: string, userId: string) {
+    // 1. 챌린지 상태 확인
+    const { data: challenge, error: challengeError } = await supabase
+      .from('challenges')
+      .select('status, max_participants')
+      .eq('id', challengeId)
+      .single()
+
+    if (challengeError) return { data: null, error: challengeError }
+    
+    if (challenge.status !== 'planning') {
+      return { data: null, error: { message: '참여 가능한 챌린지가 아닙니다.' } }
+    }
+
+    // 2. 이미 참여 중인지 확인
+    const { data: existingParticipant } = await supabase
+      .from('challenge_participants')
+      .select('id')
+      .eq('challenge_id', challengeId)
+      .eq('user_id', userId)
+      .eq('status', 'active')
+      .single()
+
+    if (existingParticipant) {
+      return { data: null, error: { message: '이미 참여 중인 챌린지입니다.' } }
+    }
+
+    // 3. 참여자 수 확인
+    const { data: participants, error: countError } = await supabase
+      .from('challenge_participants')
+      .select('id')
+      .eq('challenge_id', challengeId)
+      .eq('status', 'active')
+
+    if (countError) return { data: null, error: countError }
+
+    if (participants && participants.length >= challenge.max_participants) {
+      return { data: null, error: { message: '참여자 수가 가득 찼습니다.' } }
+    }
+
+    // 4. 참여 처리
     const { data, error } = await supabase
       .from('challenge_participants')
       .insert([{
         challenge_id: challengeId,
-        user_id: userId
+        user_id: userId,
+        status: 'active'
       }])
       .select()
       .single()
