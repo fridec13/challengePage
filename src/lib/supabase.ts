@@ -35,7 +35,7 @@ export const syncAuthSession = async (userId: string) => {
     }
 
     // 익명 로그인으로 세션 생성
-    const { data, error } = await supabase.auth.signInAnonymously({
+    const { error } = await supabase.auth.signInAnonymously({
       options: {
         data: {
           custom_user_id: userId
