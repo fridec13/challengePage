@@ -80,7 +80,7 @@ const SignupForm = () => {
       }
 
       if (data && data[0]) {
-        login(data[0])
+        await login(data[0])
         navigate('/dashboard')
       }
     } catch (err) {

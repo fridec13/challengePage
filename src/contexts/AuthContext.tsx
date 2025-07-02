@@ -12,7 +12,7 @@ interface User {
 
 interface AuthContextType {
   user: User | null
-  login: (userData: User) => void
+  login: (userData: User) => Promise<void>
   logout: () => void
   loading: boolean
   isAuthenticated: boolean
@@ -38,27 +38,31 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   // 로컬 스토리지에서 사용자 정보 복원
   useEffect(() => {
-    const savedUser = localStorage.getItem('challengeUser')
-    if (savedUser) {
-      try {
-        const userData = JSON.parse(savedUser)
-        setUser(userData)
-        // Supabase Auth와 연동
-        syncAuthSession(userData.id)
-      } catch (error) {
-        console.error('Failed to parse saved user:', error)
-        localStorage.removeItem('challengeUser')
+    const initAuth = async () => {
+      const savedUser = localStorage.getItem('challengeUser')
+      if (savedUser) {
+        try {
+          const userData = JSON.parse(savedUser)
+          setUser(userData)
+          // 세션 유효성 확인만 수행 (새로고침 시)
+          await syncAuthSession(userData.id)
+        } catch (error) {
+          console.error('Failed to parse saved user:', error)
+          localStorage.removeItem('challengeUser')
+        }
       }
+      setLoading(false)
     }
-    setLoading(false)
+    
+    initAuth()
   }, [])
 
-  const login = (userData: User) => {
+  const login = async (userData: User) => {
     setUser(userData)
     localStorage.setItem('challengeUser', JSON.stringify(userData))
-    // Supabase Auth와 연동
+    // Supabase Auth와 연동 (로그인 시에만 새로 생성)
     setCurrentUser(userData.id)
-    syncAuthSession(userData.id)
+    await syncAuthSession(userData.id)
   }
 
   const logout = () => {

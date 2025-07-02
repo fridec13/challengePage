@@ -27,14 +27,22 @@ export const getCurrentUser = () => currentUserId
 // Supabase Auth와 연동 (백그라운드 익명 로그인)
 export const syncAuthSession = async (userId: string) => {
   try {
-    // 이미 로그인되어 있으면 스킵
-    const { data: { user } } = await supabase.auth.getUser()
-    if (user) {
-      setCurrentUser(userId)
-      return true
+    // 현재 세션 확인
+    const { data: { user }, error: getUserError } = await supabase.auth.getUser()
+    
+    if (user && !getUserError) {
+      // 기존 세션의 custom_user_id가 현재 사용자와 일치하는지 확인
+      const sessionUserId = user.user_metadata?.custom_user_id
+      if (sessionUserId === userId) {
+        setCurrentUser(userId)
+        return true
+      }
+      
+      // 일치하지 않으면 기존 세션 종료
+      await supabase.auth.signOut()
     }
 
-    // 익명 로그인으로 세션 생성
+    // 새로운 익명 로그인으로 세션 생성
     const { error } = await supabase.auth.signInAnonymously({
       options: {
         data: {
