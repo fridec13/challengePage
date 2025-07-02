@@ -45,7 +45,7 @@ const LoginForm = () => {
         return
       }
 
-      await login(data)
+      login(data)
       navigate('/dashboard')
     } catch (err) {
       setError('로그인 중 오류가 발생했습니다.')

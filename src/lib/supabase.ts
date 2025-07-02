@@ -13,56 +13,7 @@ if (!supabaseUrl || !supabaseKey) {
 
 export const supabase = createClient(supabaseUrl, supabaseKey)
 
-// 사용자 인증 상태 관리
-let currentUserId: string | null = null
-
-// 현재 사용자 ID 설정 (RLS용)
-export const setCurrentUser = (userId: string) => {
-  currentUserId = userId
-}
-
-// 현재 사용자 ID 가져오기
-export const getCurrentUser = () => currentUserId
-
-// Supabase Auth와 연동 (백그라운드 익명 로그인)
-export const syncAuthSession = async (userId: string) => {
-  try {
-    // 현재 세션 확인
-    const { data: { user }, error: getUserError } = await supabase.auth.getUser()
-    
-    if (user && !getUserError) {
-      // 기존 세션의 custom_user_id가 현재 사용자와 일치하는지 확인
-      const sessionUserId = user.user_metadata?.custom_user_id
-      if (sessionUserId === userId) {
-        setCurrentUser(userId)
-        return true
-      }
-      
-      // 일치하지 않으면 기존 세션 종료
-      await supabase.auth.signOut()
-    }
-
-    // 새로운 익명 로그인으로 세션 생성
-    const { error } = await supabase.auth.signInAnonymously({
-      options: {
-        data: {
-          custom_user_id: userId
-        }
-      }
-    })
-
-    if (error) {
-      console.warn('Anonymous auth failed:', error)
-      return false
-    }
-
-    setCurrentUser(userId)
-    return true
-  } catch (error) {
-    console.warn('Auth sync failed:', error)
-    return false
-  }
-}
+// RLS 비활성화로 Supabase Auth 불필요 - 커스텀 인증만 사용
 
 // 타입 정의
 export interface Challenge {
@@ -122,11 +73,6 @@ export const authAPI = {
       ])
       .select()
 
-    // 회원가입 성공 시 Supabase Auth와 연동
-    if (data && data[0] && !error) {
-      await syncAuthSession(data[0].id)
-    }
-
     return { data, error }
   },
 
@@ -138,11 +84,6 @@ export const authAPI = {
       .eq('nickname', nickname)
       .eq('pin_code', pinCode)
       .single()
-
-    // 로그인 성공 시 Supabase Auth와 연동
-    if (data && !error) {
-      await syncAuthSession(data.id)
-    }
 
     return { data, error }
   },
