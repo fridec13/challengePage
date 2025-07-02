@@ -12,6 +12,8 @@ import JoinChallenge from './components/JoinChallenge'
 import ChallengeMain from './components/ChallengeMain'
 import ChallengeOverview from './components/ChallengeOverview'
 import ChallengeParticipants from './components/ChallengeParticipants'
+import ChallengeRules from './components/ChallengeRules'
+import ChallengeRanking from './components/ChallengeRanking'
 
 function App() {
   return (
@@ -27,9 +29,11 @@ function App() {
             <Route path="/create-challenge/scoring" element={<CreateChallengeScoring />} />
             <Route path="/create-challenge/prizes" element={<CreateChallengePrizes />} />
             <Route path="/join-challenge" element={<JoinChallenge />} />
-            <Route path="/challenge/:id" element={<ChallengeMain />} />
-            <Route path="/challenge/:id/overview" element={<ChallengeOverview />} />
-            <Route path="/challenge/:id/participants" element={<ChallengeParticipants />} />
+                      <Route path="/challenge/:id" element={<ChallengeMain />} />
+          <Route path="/challenge/:id/overview" element={<ChallengeOverview />} />
+          <Route path="/challenge/:id/participants" element={<ChallengeParticipants />} />
+          <Route path="/challenge/:id/rules" element={<ChallengeRules />} />
+          <Route path="/challenge/:id/ranking" element={<ChallengeRanking />} />
         </Routes>
       </Router>
     </AuthProvider>

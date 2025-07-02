@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Calendar, Users, Target, Flame, TrendingUp, Clock, Settings, BarChart3 } from 'lucide-react'
+import { ArrowLeft, Calendar, Users, Target, Flame, TrendingUp, Clock, Settings, BarChart3, Trophy } from 'lucide-react'
 import { challengeAPI, missionAPI } from '../lib/supabase'
 
 interface Challenge {
@@ -432,10 +432,17 @@ const ChallengeOverview = () => {
                   <span className="text-gray-700">참여자 현황</span>
                 </button>
                 <button 
+                  onClick={() => navigate(`/challenge/${id}/ranking`)}
+                  className="w-full flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg transition-colors"
+                >
+                  <Trophy className="w-5 h-5 text-orange-600" />
+                  <span className="text-gray-700">순위 및 통계</span>
+                </button>
+                <button 
                   onClick={() => navigate(`/challenge/${id}/rules`)}
                   className="w-full flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg transition-colors"
                 >
-                  <Settings className="w-5 h-5 text-gray-600" />
+                  <Settings className="w-5 h-5 text-purple-600" />
                   <span className="text-gray-700">규칙 확인</span>
                 </button>
               </div>
