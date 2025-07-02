@@ -101,7 +101,9 @@ const CreateChallengePrizes = () => {
     const participants = basicInfo?.maxParticipants || 3
     let distribution: number[] = []
     
-    if (participants === 2) {
+    if (participants === 1) {
+      distribution = [100]
+    } else if (participants === 2) {
       distribution = [70, 30]
     } else if (participants === 3) {
       distribution = [50, 30, 20]

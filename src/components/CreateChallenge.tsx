@@ -76,8 +76,8 @@ const CreateChallenge = () => {
       }
     }
     
-    if (formData.maxParticipants < 2) {
-      newErrors.maxParticipants = '최소 2명 이상이어야 합니다'
+    if (formData.maxParticipants < 1) {
+      newErrors.maxParticipants = '최소 1명 이상이어야 합니다'
     } else if (formData.maxParticipants > 10) {
       newErrors.maxParticipants = '최대 10명까지 가능합니다'
     }
@@ -195,7 +195,7 @@ const CreateChallenge = () => {
                 name="maxParticipants"
                 value={formData.maxParticipants}
                 onChange={handleChange}
-                min="2"
+                min="1"
                 max="10"
                 className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
                   errors.maxParticipants ? 'border-red-500' : 'border-gray-300'
@@ -205,7 +205,7 @@ const CreateChallenge = () => {
                 <p className="mt-1 text-sm text-red-600">{errors.maxParticipants}</p>
               )}
               <p className="mt-1 text-xs text-gray-500">
-                2-10명까지 설정 가능합니다
+                1-10명까지 설정 가능합니다
               </p>
             </div>
 
