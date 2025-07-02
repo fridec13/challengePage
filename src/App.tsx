@@ -6,6 +6,8 @@ import SignupForm from './components/SignupForm'
 import Dashboard from './components/Dashboard'
 import CreateChallenge from './components/CreateChallenge'
 import CreateChallengeMissions from './components/CreateChallengeMissions'
+import CreateChallengeScoring from './components/CreateChallengeScoring'
+import CreateChallengePrizes from './components/CreateChallengePrizes'
 
 function App() {
   return (
@@ -16,8 +18,10 @@ function App() {
           <Route path="/login" element={<LoginForm />} />
           <Route path="/signup" element={<SignupForm />} />
           <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/create-challenge" element={<CreateChallenge />} />
-          <Route path="/create-challenge/missions" element={<CreateChallengeMissions />} />
+                      <Route path="/create-challenge" element={<CreateChallenge />} />
+            <Route path="/create-challenge/missions" element={<CreateChallengeMissions />} />
+            <Route path="/create-challenge/scoring" element={<CreateChallengeScoring />} />
+            <Route path="/create-challenge/prizes" element={<CreateChallengePrizes />} />
         </Routes>
       </Router>
     </AuthProvider>
