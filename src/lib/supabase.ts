@@ -158,21 +158,21 @@ export const debugAPI = {
     
     try {
       // users 테이블 확인
-      const { data: users, error: usersError } = await supabase
+      const { error: usersError } = await supabase
         .from('users')
         .select('count')
         .limit(1)
       console.log('Users table:', { exists: !usersError, error: usersError })
 
       // challenges 테이블 확인
-      const { data: challenges, error: challengesError } = await supabase
+      const { error: challengesError } = await supabase
         .from('challenges')
         .select('count')
         .limit(1)
       console.log('Challenges table:', { exists: !challengesError, error: challengesError })
 
       // challenge_participants 테이블 확인
-      const { data: participants, error: participantsError } = await supabase
+      const { error: participantsError } = await supabase
         .from('challenge_participants')
         .select('count')
         .limit(1)
