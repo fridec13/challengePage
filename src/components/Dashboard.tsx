@@ -1,4 +1,4 @@
-import { LogOut, Plus, Users, Play, Archive, Trophy, Calendar } from 'lucide-react'
+import { LogOut, Plus, Users, Archive, Trophy, Calendar } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { challengeAPI, debugAPI } from '../lib/supabase'
@@ -143,8 +143,11 @@ const Dashboard = () => {
               </div>
             ) : activeChallenge ? (
               <div className="space-y-4">
-                <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-4 rounded-lg border border-indigo-200">
-                  <h3 className="font-semibold text-gray-800 mb-2">{activeChallenge.title}</h3>
+                <div 
+                  onClick={() => navigate(`/challenge/${activeChallenge.challenge_id}`)}
+                  className="bg-gradient-to-r from-indigo-50 to-purple-50 p-4 rounded-lg border border-indigo-200 cursor-pointer hover:shadow-md transition-all group"
+                >
+                  <h3 className="font-semibold text-gray-800 mb-2 group-hover:text-indigo-600 transition-colors">{activeChallenge.title}</h3>
                   <div className="flex items-center justify-between">
                     <div className="text-sm text-gray-600">
                       <p>상태: <span className="font-medium text-indigo-600">{
@@ -154,17 +157,14 @@ const Dashboard = () => {
                       }</span></p>
                       <p>기간: {new Date(activeChallenge.start_date).toLocaleDateString()} ~ {new Date(activeChallenge.end_date).toLocaleDateString()}</p>
                     </div>
+                    <div className="text-indigo-600 group-hover:text-indigo-700">
+                      <span className="text-sm font-medium">
+                        {activeChallenge.status === 'planning' ? '대기실 입장 →' : 
+                         activeChallenge.status === 'active' ? '챌린지 참여 →' : '상세보기 →'}
+                      </span>
+                    </div>
                   </div>
                 </div>
-                {activeChallenge.status === 'active' && (
-                  <button
-                    onClick={() => navigate(`/challenge/${activeChallenge.challenge_id}`)}
-                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2"
-                  >
-                    <Play className="w-5 h-5" />
-                    <span>챌린지 참여하기</span>
-                  </button>
-                )}
               </div>
             ) : (
               <div className="text-center py-8">
