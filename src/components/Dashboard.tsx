@@ -1,6 +1,8 @@
-import { LogOut, Plus, Users } from 'lucide-react'
+import { LogOut, Plus, Users, Play } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import { challengeAPI } from '../lib/supabase'
+import { useState, useEffect } from 'react'
 
 // 프로필 아바타 매핑
 const profileOptions = [
@@ -16,11 +18,42 @@ const profileOptions = [
   { id: 10, bg: 'bg-cyan-400', text: '❄️' },
 ]
 
+interface ActiveChallenge {
+  challenge_id: string
+  title: string
+  status: string
+  start_date: string
+  end_date: string
+}
+
 const Dashboard = () => {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
+  const [activeChallenge, setActiveChallenge] = useState<ActiveChallenge | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
   
   const userProfile = profileOptions.find(p => p.id === user?.profile_id) || profileOptions[0]
+
+  useEffect(() => {
+    if (user?.id) {
+      loadActiveChallenge()
+    }
+  }, [user])
+
+  const loadActiveChallenge = async () => {
+    if (!user?.id) return
+    
+    try {
+      const result = await challengeAPI.getUserActiveChallenge(user.id)
+      if (result.data) {
+        setActiveChallenge(result.data)
+      }
+    } catch (error) {
+      console.error('활성 챌린지 로드 실패:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   const handleLogout = () => {
     logout()
@@ -58,12 +91,44 @@ const Dashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <div className="bg-white rounded-xl shadow-lg p-6">
             <h2 className="text-xl font-semibold text-gray-800 mb-4">참여 중인 챌린지</h2>
-            <div className="text-center py-8">
-              <div className="text-gray-400 mb-4">
-                <Users className="w-16 h-16 mx-auto" />
+            {isLoading ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+                <p className="text-gray-600">로딩 중...</p>
               </div>
-              <p className="text-gray-600">아직 참여 중인 챌린지가 없습니다</p>
-            </div>
+            ) : activeChallenge ? (
+              <div className="space-y-4">
+                <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-4 rounded-lg border border-indigo-200">
+                  <h3 className="font-semibold text-gray-800 mb-2">{activeChallenge.title}</h3>
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm text-gray-600">
+                      <p>상태: <span className="font-medium text-indigo-600">{
+                        activeChallenge.status === 'planning' ? '시작 대기' :
+                        activeChallenge.status === 'active' ? '진행 중' :
+                        activeChallenge.status === 'completed' ? '완료' : activeChallenge.status
+                      }</span></p>
+                      <p>기간: {new Date(activeChallenge.start_date).toLocaleDateString()} ~ {new Date(activeChallenge.end_date).toLocaleDateString()}</p>
+                    </div>
+                  </div>
+                </div>
+                {activeChallenge.status === 'active' && (
+                  <button
+                    onClick={() => navigate(`/challenge/${activeChallenge.challenge_id}`)}
+                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2"
+                  >
+                    <Play className="w-5 h-5" />
+                    <span>챌린지 참여하기</span>
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <div className="text-gray-400 mb-4">
+                  <Users className="w-16 h-16 mx-auto" />
+                </div>
+                <p className="text-gray-600">아직 참여 중인 챌린지가 없습니다</p>
+              </div>
+            )}
           </div>
 
           <div className="bg-white rounded-xl shadow-lg p-6">

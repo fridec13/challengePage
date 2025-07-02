@@ -121,6 +121,17 @@ export const challengeAPI = {
     return { data, error }
   },
 
+  // 챌린지 ID로 조회
+  async getChallengeById(id: string) {
+    const { data, error } = await supabase
+      .from('challenges')
+      .select('*')
+      .eq('id', id)
+      .single()
+
+    return { data, error }
+  },
+
   // 사용자의 현재 참여 챌린지 조회
   async getUserActiveChallenge(userId: string) {
     const { data, error } = await supabase.rpc('get_user_active_challenge', {

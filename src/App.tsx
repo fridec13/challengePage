@@ -9,6 +9,7 @@ import CreateChallengeMissions from './components/CreateChallengeMissions'
 import CreateChallengeScoring from './components/CreateChallengeScoring'
 import CreateChallengePrizes from './components/CreateChallengePrizes'
 import JoinChallenge from './components/JoinChallenge'
+import ChallengeMain from './components/ChallengeMain'
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
             <Route path="/create-challenge/scoring" element={<CreateChallengeScoring />} />
             <Route path="/create-challenge/prizes" element={<CreateChallengePrizes />} />
             <Route path="/join-challenge" element={<JoinChallenge />} />
+            <Route path="/challenge/:id" element={<ChallengeMain />} />
         </Routes>
       </Router>
     </AuthProvider>
