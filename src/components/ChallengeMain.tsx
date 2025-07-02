@@ -302,18 +302,18 @@ const ChallengeMain = () => {
             <ArrowLeft className="w-6 h-6 text-gray-600" />
           </button>
           <div className="flex-1 mx-4">
+            <h1 className="text-lg font-bold text-gray-800 truncate">{challenge.title}</h1>
             <div className="flex items-center space-x-2">
-              <h1 className="text-lg font-bold text-gray-800 truncate">{challenge.title}</h1>
+              {challenge.status === 'completed' && (
+                <div className="text-xs text-blue-600 font-medium">📅 챌린지 종료</div>
+              )}
+              {challenge.status === 'planning' && (
+                <div className="text-xs text-yellow-600 font-medium">⏳ 시작 대기</div>
+              )}
               <span className="text-sm bg-gray-100 text-gray-600 px-2 py-1 rounded-md font-mono">
                 {challenge.challenge_code}
               </span>
             </div>
-            {challenge.status === 'completed' && (
-              <div className="text-xs text-blue-600 font-medium">📅 챌린지 종료</div>
-            )}
-            {challenge.status === 'planning' && (
-              <div className="text-xs text-yellow-600 font-medium">⏳ 시작 대기</div>
-            )}
           </div>
           <div className="flex space-x-2">
             <button
