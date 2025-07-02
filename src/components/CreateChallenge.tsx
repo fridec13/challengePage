@@ -10,6 +10,14 @@ interface ChallengeBasicInfo {
   durationDays: number
 }
 
+interface FormErrors {
+  title?: string
+  description?: string
+  maxParticipants?: string
+  startDate?: string
+  durationDays?: string
+}
+
 const CreateChallenge = () => {
   const navigate = useNavigate()
   const [formData, setFormData] = useState<ChallengeBasicInfo>({
@@ -19,7 +27,7 @@ const CreateChallenge = () => {
     startDate: '',
     durationDays: 100
   })
-  const [errors, setErrors] = useState<Partial<ChallengeBasicInfo>>({})
+  const [errors, setErrors] = useState<FormErrors>({})
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -42,13 +50,13 @@ const CreateChallenge = () => {
     }
     
     // 에러 제거
-    if (errors[name as keyof ChallengeBasicInfo]) {
+    if (errors[name as keyof FormErrors]) {
       setErrors(prev => ({ ...prev, [name]: undefined }))
     }
   }
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<ChallengeBasicInfo> = {}
+    const newErrors: FormErrors = {}
     
     if (!formData.title.trim()) {
       newErrors.title = '챌린지 제목을 입력해주세요'
