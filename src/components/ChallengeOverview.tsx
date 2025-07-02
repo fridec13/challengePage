@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Calendar, Users, Target, Flame, TrendingUp, Clock, Settings, BarChart3, Trophy } from 'lucide-react'
 import { challengeAPI, missionAPI } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
+import { ScoringSystem } from '../lib/scoring'
 
 interface Challenge {
   id: string
@@ -37,6 +38,7 @@ interface Mission {
 interface MissionLog {
   id: string
   mission_id: string
+  user_id: string
   log_date: string
   value: any
   is_late: boolean
@@ -121,33 +123,47 @@ const ChallengeOverview = () => {
     }
   }
 
-
-
   const calculateMyStats = () => {
-    if (!myLogs.length) return { streak: 0, totalCompleted: 0, successRate: 0 }
-
-    // 날짜별로 그룹화
-    const logsByDate = myLogs.reduce((acc, log) => {
-      if (!acc[log.log_date]) acc[log.log_date] = []
-      acc[log.log_date].push(log)
-      return acc
-    }, {} as Record<string, MissionLog[]>)
+    if (!myLogs.length || !challenge || !user?.id) return { streak: 0, totalCompleted: 0, successRate: 0 }
 
     const totalCompleted = myLogs.length
 
-    // 연속 달성일 계산 (간단한 버전)
-    const sortedDates = Object.keys(logsByDate).sort()
-    let streak = 0
-    const today = new Date().toISOString().split('T')[0]
-    
-    for (let i = sortedDates.length - 1; i >= 0; i--) {
-      const date = sortedDates[i]
-      if (date <= today) {
-        const dayLogs = logsByDate[date]
-        if (dayLogs.length === missions.length) {
-          streak++
-        } else {
-          break
+    // ScoringSystem을 사용한 정확한 연속 달성일 계산
+    let currentStreak = 0
+    try {
+      const scoringSystem = new ScoringSystem(
+        missions,
+        challenge.scoring_method,
+        challenge.start_date,
+        challenge.end_date
+      )
+      
+      const userScore = scoringSystem.calculateRankings(myLogs, [user.id!])[0]
+      if (userScore) {
+        currentStreak = userScore.current_streak
+      }
+    } catch (error) {
+      console.error('연속 달성일 계산 오류:', error)
+      
+      // 기존 간단한 계산 로직을 fallback으로 사용
+      const logsByDate = myLogs.reduce((acc, log) => {
+        if (!acc[log.log_date]) acc[log.log_date] = []
+        acc[log.log_date].push(log)
+        return acc
+      }, {} as Record<string, MissionLog[]>)
+
+      const sortedDates = Object.keys(logsByDate).sort()
+      const today = new Date().toISOString().split('T')[0]
+      
+      for (let i = sortedDates.length - 1; i >= 0; i--) {
+        const date = sortedDates[i]
+        if (date <= today) {
+          const dayLogs = logsByDate[date]
+          if (dayLogs.length === missions.length) {
+            currentStreak++
+          } else {
+            break
+          }
         }
       }
     }
@@ -155,7 +171,7 @@ const ChallengeOverview = () => {
     const totalPossibleLogs = calculateTotalPossibleLogs()
     const successRate = totalPossibleLogs > 0 ? (totalCompleted / totalPossibleLogs) * 100 : 0
 
-    return { streak, totalCompleted, successRate: Math.round(successRate) }
+    return { streak: currentStreak, totalCompleted, successRate: Math.round(successRate) }
   }
 
   const calculateTotalPossibleLogs = () => {
