@@ -1,8 +1,17 @@
 import { createClient } from '@supabase/supabase-js'
 
-// 실제 사용시에는 환경 변수로 관리해야 합니다
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'your_supabase_url_here'
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'your_supabase_anon_key_here'
+// 환경 변수 확인 및 디버깅
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+
+// 디버깅용 로그 (프로덕션에서는 제거)
+console.log('Supabase URL exists:', !!supabaseUrl)
+console.log('Supabase Key exists:', !!supabaseKey)
+
+// 환경 변수가 없으면 에러 발생
+if (!supabaseUrl || !supabaseKey) {
+  throw new Error('Missing Supabase environment variables. Please check VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY')
+}
 
 export const supabase = createClient(supabaseUrl, supabaseKey)
 
