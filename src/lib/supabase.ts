@@ -258,7 +258,8 @@ export const challengeAPI = {
           title,
           status,
           start_date,
-          end_date
+          end_date,
+          challenge_code
         )
       `)
       .eq('user_id', userId)
@@ -276,6 +277,7 @@ export const challengeAPI = {
       status: fallbackData.challenges.status || 'planning',
       start_date: fallbackData.challenges.start_date || '',
       end_date: fallbackData.challenges.end_date || '',
+      challenge_code: fallbackData.challenges.challenge_code || '',
       joined_at: fallbackData.joined_at || ''
     } : null
 
@@ -451,6 +453,7 @@ export const challengeAPI = {
             entry_fee,
             prize_distribution,
             creator_id,
+            challenge_code,
             users!creator_id (
               nickname
             )
