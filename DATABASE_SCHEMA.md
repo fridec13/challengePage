@@ -136,23 +136,17 @@ CREATE INDEX idx_logs_user_challenge ON mission_logs(user_id, challenge_id);
 
 ### `challenges.prize_distribution`
 ```json
-{
-  "total_amount": 650000,
-  "distribution": [
-    {"rank": 1, "amount": 300000},
-    {"rank": 2, "amount": 200000},
-    {"rank": 3, "amount": 100000},
-    {"rank": 4, "amount": 50000}
-  ]
-}
+[50, 30, 20]  // 순위별 퍼센트 배열 (1등 50%, 2등 30%, 3등 20%)
 ```
 
 ### `challenges.scoring_method`
 ```json
 {
-  "consistency_weight": 0.7,  // 꾸준함 가중치
-  "volume_weight": 0.3,       // 총량 가중치
-  "streak_bonus": 0.1         // 연속 달성 보너스
+  "consistency": 50,        // 꾸준함(연속 달성) 가중치 (%)
+  "volume": 30,            // 총량(누적 달성) 가중치 (%)
+  "quality": 20,           // 충실도(질적 평가) 가중치 (%)
+  "streak_bonus": 10,      // 연속 달성 보너스 (%)
+  "enable_quality": true   // 충실도 평가 활성화 여부
 }
 ```
 
@@ -205,5 +199,5 @@ ORDER BY (us.on_time_logs * 0.7 + us.total_logs * 0.3) DESC;
 
 ---
 
-**작성일**: 2025-01-02
+**작성일**: 2025-07-02
 **상태**: 설계 완료, 구현 대기 
