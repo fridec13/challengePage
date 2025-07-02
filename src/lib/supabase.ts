@@ -314,14 +314,14 @@ export const challengeAPI = {
 
     if (fallbackError) return { data: null, error: fallbackError }
 
-    // 데이터 형식을 RPC 결과와 맞춤
-    const formattedData = fallbackData?.challenges ? {
+    // 데이터 형식을 RPC 결과와 맞춤 (null 안전성 추가)
+    const formattedData = fallbackData?.challenges && fallbackData.challenges.id ? {
       challenge_id: fallbackData.challenges.id,
-      title: fallbackData.challenges.title,
-      status: fallbackData.challenges.status,
-      start_date: fallbackData.challenges.start_date,
-      end_date: fallbackData.challenges.end_date,
-      joined_at: fallbackData.joined_at
+      title: fallbackData.challenges.title || '',
+      status: fallbackData.challenges.status || 'planning',
+      start_date: fallbackData.challenges.start_date || '',
+      end_date: fallbackData.challenges.end_date || '',
+      joined_at: fallbackData.joined_at || ''
     } : null
 
     return { data: formattedData, error: null }
@@ -479,32 +479,45 @@ export const challengeAPI = {
 
   // 사용자의 완료된 챌린지 목록 조회 (아카이브용)
   async getUserCompletedChallenges(userId: string) {
-    // 올바른 Supabase 관계형 쿼리 구문 사용
-    const { data, error } = await supabase
-      .from('challenge_participants')
-      .select(`
-        *,
-        challenges!challenge_id (
-          id,
-          title,
-          description,
-          start_date,
-          end_date,
-          status,
-          max_participants,
-          entry_fee,
-          prize_distribution,
-          creator_id,
-          users!creator_id (
-            nickname
+    try {
+      // 올바른 Supabase 관계형 쿼리 구문 사용
+      const { data, error } = await supabase
+        .from('challenge_participants')
+        .select(`
+          *,
+          challenges!challenge_id (
+            id,
+            title,
+            description,
+            start_date,
+            end_date,
+            status,
+            max_participants,
+            entry_fee,
+            prize_distribution,
+            creator_id,
+            users!creator_id (
+              nickname
+            )
           )
-        )
-      `)
-      .eq('user_id', userId)
-      .eq('status', 'active')
-      .eq('challenges.status', 'completed')
+        `)
+        .eq('user_id', userId)
+        .eq('status', 'active')
+        .eq('challenges.status', 'completed')
 
-    return { data, error }
+      // null 데이터 필터링
+      const safeData = data?.filter(item => 
+        item && 
+        item.challenges && 
+        item.challenges.id &&
+        item.challenges.title
+      ) || []
+
+      return { data: safeData, error }
+    } catch (err) {
+      console.error('getUserCompletedChallenges error:', err)
+      return { data: [], error: err }
+    }
   },
 
   // 챌린지 최종 결과 조회

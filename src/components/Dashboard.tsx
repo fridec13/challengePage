@@ -80,11 +80,21 @@ const Dashboard = () => {
     
     try {
       const result = await challengeAPI.getUserCompletedChallenges(user.id)
-      if (result.data) {
-        setCompletedChallenges(result.data)
+      if (result.data && Array.isArray(result.data)) {
+        // null 데이터 추가 필터링
+        const safeData = result.data.filter(item => 
+          item && 
+          item.challenges && 
+          item.challenges.title &&
+          item.challenges.id
+        )
+        setCompletedChallenges(safeData)
+      } else {
+        setCompletedChallenges([])
       }
     } catch (error) {
       console.error('완료된 챌린지 로드 실패:', error)
+      setCompletedChallenges([])
     } finally {
       setIsLoadingArchive(false)
     }
@@ -204,33 +214,38 @@ const Dashboard = () => {
             </div>
           ) : completedChallenges.length > 0 ? (
             <div className="space-y-4">
-              {completedChallenges.slice(0, 3).map((item) => (
+              {completedChallenges.slice(0, 3).map((item) => {
+                // 안전한 데이터 접근
+                const challenge = item?.challenges
+                if (!challenge || !challenge.id || !challenge.title) return null
+                
+                return (
                 <div 
-                  key={item.challenges.id}
-                  onClick={() => navigate(`/challenge/${item.challenges.id}/results`)}
+                  key={challenge.id}
+                  onClick={() => navigate(`/challenge/${challenge.id}/results`)}
                   className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg border border-blue-200 cursor-pointer hover:shadow-md transition-all group"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
                       <h3 className="font-semibold text-gray-800 group-hover:text-indigo-600 transition-colors">
-                        {item.challenges.title}
+                        {challenge.title}
                       </h3>
                       <div className="flex items-center space-x-4 text-sm text-gray-600 mt-1">
                         <div className="flex items-center">
                           <Calendar className="w-4 h-4 mr-1" />
-                          {new Date(item.challenges.start_date).toLocaleDateString()} ~ 
-                          {new Date(item.challenges.end_date).toLocaleDateString()}
+                          {challenge.start_date ? new Date(challenge.start_date).toLocaleDateString() : '-'} ~ 
+                          {challenge.end_date ? new Date(challenge.end_date).toLocaleDateString() : '-'}
                         </div>
                         <div className="flex items-center">
                           <Users className="w-4 h-4 mr-1" />
-                          최대 {item.challenges.max_participants}명
+                          최대 {challenge.max_participants || 0}명
                         </div>
                         <div className="text-green-600 font-medium">
-                          상금: {new Intl.NumberFormat('ko-KR').format(item.challenges.entry_fee)}원
+                          상금: {new Intl.NumberFormat('ko-KR').format(challenge.entry_fee || 0)}원
                         </div>
                       </div>
                       <p className="text-xs text-gray-500 mt-1">
-                        생성자: {item.challenges.users.nickname}
+                        생성자: {challenge.users?.nickname || '알 수 없음'}
                       </p>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -241,7 +256,8 @@ const Dashboard = () => {
                     </div>
                   </div>
                 </div>
-              ))}
+                )
+              })}
               
               {completedChallenges.length > 3 && (
                 <button
