@@ -147,7 +147,7 @@ const Dashboard = () => {
             ) : activeChallenge ? (
               <div className="space-y-4">
                 <div 
-                  onClick={() => navigate(`/challenge/${activeChallenge.challenge_code}`)}
+                  onClick={() => navigate(`/challenge/${activeChallenge.challenge_code || activeChallenge.challenge_id}`)}
                   className="bg-gradient-to-r from-indigo-50 to-purple-50 p-4 rounded-lg border border-indigo-200 cursor-pointer hover:shadow-md transition-all group"
                 >
                   <h3 className="font-semibold text-gray-800 mb-2 group-hover:text-indigo-600 transition-colors">{activeChallenge.title}</h3>
@@ -225,7 +225,7 @@ const Dashboard = () => {
                 return (
                 <div 
                   key={challenge.id}
-                  onClick={() => navigate(`/challenge/${challenge.challenge_code}/results`)}
+                  onClick={() => navigate(`/challenge/${challenge.challenge_code || challenge.id}/results`)}
                   className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg border border-blue-200 cursor-pointer hover:shadow-md transition-all group"
                 >
                   <div className="flex items-center justify-between">

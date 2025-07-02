@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Target, Clock, Flame, Users, CheckCircle, Plus, Minus, BarChart3, Eye, Trophy } from 'lucide-react'
+import { ArrowLeft, Target, Clock, Flame, Users, CheckCircle, Plus, Minus, BarChart3, Eye, Trophy, ChevronLeft, ChevronRight } from 'lucide-react'
 import { challengeAPI, missionAPI } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { ScoringSystem } from '../lib/scoring'
@@ -62,6 +62,10 @@ const ChallengeMain = () => {
   const [currentMissionIndex, setCurrentMissionIndex] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  
+  // 터치 스와이프 관련 state
+  const [touchStart, setTouchStart] = useState<number | null>(null)
+  const [touchEnd, setTouchEnd] = useState<number | null>(null)
 
   const today = new Date().toISOString().split('T')[0]
 
@@ -72,7 +76,11 @@ const ChallengeMain = () => {
   }, [id])
 
   const loadChallengeData = async () => {
-    if (!id) return
+    if (!id) {
+      console.error('챌린지 코드가 없습니다')
+      navigate('/dashboard')
+      return
+    }
     
     setIsLoading(true)
     try {
@@ -80,6 +88,7 @@ const ChallengeMain = () => {
       let challengeResult = await challengeAPI.getChallengeByCode(id)
         
       if (challengeResult.error || !challengeResult.data) {
+        console.error('챌린지를 찾을 수 없습니다:', id)
         navigate('/dashboard')
         return
       }
@@ -254,6 +263,33 @@ const ChallengeMain = () => {
     return todayLogs.length
   }
 
+  // 터치 스와이프 핸들러들
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null) // 이전 터치 종료 지점 초기화
+    setTouchStart(e.targetTouches[0].clientX)
+  }
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX)
+  }
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return
+    
+    const distance = touchStart - touchEnd
+    const isLeftSwipe = distance > 50
+    const isRightSwipe = distance < -50
+
+    if (isLeftSwipe && currentMissionIndex < missions.length - 1) {
+      // 왼쪽 스와이프: 다음 미션
+      setCurrentMissionIndex(currentMissionIndex + 1)
+    }
+    if (isRightSwipe && currentMissionIndex > 0) {
+      // 오른쪽 스와이프: 이전 미션
+      setCurrentMissionIndex(currentMissionIndex - 1)
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
@@ -417,21 +453,54 @@ const ChallengeMain = () => {
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-800">오늘의 미션</h3>
             {missions.length > 1 && (
-              <div className="flex space-x-1">
-                {missions.map((_, index) => (
+              <div className="flex items-center space-x-3">
+                {/* 데스크탑용 화살표 버튼 */}
+                <div className="hidden md:flex items-center space-x-2">
                   <button
-                    key={index}
-                    onClick={() => setCurrentMissionIndex(index)}
-                    className={`w-2 h-2 rounded-full transition-colors ${
-                      index === currentMissionIndex ? 'bg-indigo-600' : 'bg-gray-300'
-                    }`}
-                  />
-                ))}
+                    onClick={() => setCurrentMissionIndex(Math.max(0, currentMissionIndex - 1))}
+                    disabled={currentMissionIndex === 0}
+                    className="p-1 rounded-full hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <ChevronLeft className="w-4 h-4 text-gray-600" />
+                  </button>
+                  <button
+                    onClick={() => setCurrentMissionIndex(Math.min(missions.length - 1, currentMissionIndex + 1))}
+                    disabled={currentMissionIndex === missions.length - 1}
+                    className="p-1 rounded-full hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <ChevronRight className="w-4 h-4 text-gray-600" />
+                  </button>
+                </div>
+                
+                {/* 점 표시기 */}
+                <div className="flex space-x-1">
+                  {missions.map((_, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setCurrentMissionIndex(index)}
+                      className={`w-2 h-2 rounded-full transition-colors ${
+                        index === currentMissionIndex ? 'bg-indigo-600' : 'bg-gray-300'
+                      }`}
+                    />
+                  ))}
+                </div>
               </div>
             )}
           </div>
 
-          <div className="space-y-4">
+          {/* 모바일 스와이프 힌트 */}
+          {missions.length > 1 && (
+            <div className="md:hidden text-center mb-4">
+              <p className="text-xs text-gray-500">← 좌우로 스와이프하여 미션 탐색 →</p>
+            </div>
+          )}
+
+          <div 
+            className="space-y-4 touch-pan-x"
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+          >
             <div>
               <h4 className="text-xl font-bold text-gray-800 mb-2">{currentMission.title}</h4>
               {currentMission.description && (
