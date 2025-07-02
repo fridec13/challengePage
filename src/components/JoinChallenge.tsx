@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Users, Calendar, DollarSign, Trophy, AlertCircle, CheckCircle } from 'lucide-react'
 import { challengeAPI } from '../lib/supabase'
+import { useAuth } from '../contexts/AuthContext'
 
 interface Challenge {
   id: string
@@ -34,6 +35,7 @@ interface ChallengeParticipant {
 
 const JoinChallenge = () => {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [challengeCode, setChallengeCode] = useState('')
   const [challenge, setChallenge] = useState<Challenge | null>(null)
   const [participants, setParticipants] = useState<ChallengeParticipant[]>([])
@@ -103,7 +105,10 @@ const JoinChallenge = () => {
       }
 
       // 이미 참여 중인지 확인
-      const user = JSON.parse(localStorage.getItem('user') || '{}')
+      if (!user?.id) {
+        setError('로그인이 필요합니다')
+        return
+      }
       const alreadyJoined = participantsList.some(p => p.user_id === user.id)
       
       if (alreadyJoined) {
@@ -130,12 +135,11 @@ const JoinChallenge = () => {
   }
 
   const handleJoinChallenge = async () => {
-    if (!challenge) return
+    if (!challenge || !user?.id) return
 
     setIsJoining(true)
     
     try {
-      const user = JSON.parse(localStorage.getItem('user') || '{}')
       const result = await challengeAPI.joinChallenge(challenge.id, user.id)
       
       if (result.error) {

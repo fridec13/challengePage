@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Trophy, Medal, Award, TrendingUp, Calendar, Users, Target, Star, Crown } from 'lucide-react'
 import { challengeAPI } from '../lib/supabase'
 import { ScoringSystem } from '../lib/scoring'
+import { useAuth } from '../contexts/AuthContext'
 
 interface Challenge {
   id: string
@@ -59,12 +60,11 @@ interface ChallengeResultData {
 const ChallengeResults = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [resultData, setResultData] = useState<ChallengeResultData | null>(null)
   const [rankings, setRankings] = useState<any[]>([])
   const [stats, setStats] = useState<any>({})
   const [isLoading, setIsLoading] = useState(true)
-
-  const user = JSON.parse(localStorage.getItem('user') || '{}')
 
   useEffect(() => {
     if (id) {
@@ -206,8 +206,8 @@ const ChallengeResults = () => {
   }
 
   const prizeDistribution = calculatePrizeDistribution()
-  const myRanking = rankings.find(r => r.userId === user.id)
-  const myRank = rankings.findIndex(r => r.userId === user.id) + 1
+  const myRanking = rankings.find(r => r.userId === user?.id)
+  const myRank = rankings.findIndex(r => r.userId === user?.id) + 1
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
@@ -300,7 +300,7 @@ const ChallengeResults = () => {
                   key={ranking.userId}
                   className={`flex items-center justify-between p-4 rounded-xl ${
                     rank <= 3 ? 'bg-gradient-to-r from-yellow-50 to-yellow-100' : 'bg-gray-50'
-                  } ${ranking.userId === user.id ? 'ring-2 ring-indigo-500' : ''}`}
+                  } ${ranking.userId === user?.id ? 'ring-2 ring-indigo-500' : ''}`}
                 >
                   <div className="flex items-center space-x-4">
                     <div className="flex items-center justify-center w-8 h-8">
@@ -312,7 +312,7 @@ const ChallengeResults = () => {
                     <div>
                       <p className="font-semibold text-gray-800">
                         {ranking.nickname}
-                        {ranking.userId === user.id && (
+                        {ranking.userId === user?.id && (
                           <span className="text-indigo-600 text-sm ml-1">(나)</span>
                         )}
                       </p>
