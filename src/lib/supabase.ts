@@ -248,6 +248,87 @@ export const challengeAPI = {
 
     // 상태 변경이 필요없으면 기존 챌린지 그대로 반환
     return { data: challenge, error: null }
+  },
+
+  // 사용자의 완료된 챌린지 목록 조회 (아카이브용)
+  async getUserCompletedChallenges(userId: string) {
+    const { data, error } = await supabase
+      .from('challenge_participants')
+      .select(`
+        *,
+        challenges:challenge_id (
+          id,
+          title,
+          description,
+          start_date,
+          end_date,
+          status,
+          max_participants,
+          entry_fee,
+          prize_distribution,
+          creator_id,
+          users:creator_id (
+            nickname
+          )
+        )
+      `)
+      .eq('user_id', userId)
+      .eq('status', 'active')
+      .eq('challenges.status', 'completed')
+      .order('challenges.end_date', { ascending: false })
+
+    return { data, error }
+  },
+
+  // 챌린지 최종 결과 조회
+  async getChallengeResults(challengeId: string) {
+    // 챌린지 기본 정보
+    const challengeResult = await this.getChallengeById(challengeId)
+    if (challengeResult.error || !challengeResult.data) {
+      return { data: null, error: challengeResult.error }
+    }
+
+    // 참여자 목록
+    const participantsResult = await this.getChallengeParticipants(challengeId)
+    if (participantsResult.error) {
+      return { data: null, error: participantsResult.error }
+    }
+
+    // 미션 목록
+    const missionsResult = await missionAPI.getChallengeMissions(challengeId)
+    if (missionsResult.error) {
+      return { data: null, error: missionsResult.error }
+    }
+
+    // 모든 미션 로그
+    const { data: allLogs, error: logsError } = await supabase
+      .from('mission_logs')
+      .select(`
+        *,
+        missions:mission_id (
+          title,
+          mission_type
+        ),
+        users:user_id (
+          nickname,
+          profile_id
+        )
+      `)
+      .eq('challenge_id', challengeId)
+
+    if (logsError) {
+      return { data: null, error: logsError }
+    }
+
+    return {
+      data: {
+        challenge: challengeResult.data,
+        participants: participantsResult.data || [],
+        missions: missionsResult.data || [],
+        logs: allLogs || []
+      },
+      error: null
+    }
   }
 }
 

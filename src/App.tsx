@@ -13,6 +13,7 @@ import ChallengeMain from './components/ChallengeMain'
 import ChallengeOverview from './components/ChallengeOverview'
 import ChallengeParticipants from './components/ChallengeParticipants'
 import ChallengeRules from './components/ChallengeRules'
+import ChallengeResults from './components/ChallengeResults'
 import ChallengeRanking from './components/ChallengeRanking'
 
 function App() {
@@ -32,8 +33,9 @@ function App() {
                       <Route path="/challenge/:id" element={<ChallengeMain />} />
           <Route path="/challenge/:id/overview" element={<ChallengeOverview />} />
           <Route path="/challenge/:id/participants" element={<ChallengeParticipants />} />
-          <Route path="/challenge/:id/rules" element={<ChallengeRules />} />
-          <Route path="/challenge/:id/ranking" element={<ChallengeRanking />} />
+                      <Route path="/challenge/:id/rules" element={<ChallengeRules />} />
+            <Route path="/challenge/:id/ranking" element={<ChallengeRanking />} />
+            <Route path="/challenge/:id/results" element={<ChallengeResults />} />
         </Routes>
       </Router>
     </AuthProvider>

@@ -355,12 +355,20 @@ const ChallengeMain = () => {
                 <Trophy className="w-16 h-16 text-blue-500 mx-auto mb-4" />
                 <p className="text-blue-600 font-semibold mb-2">챌린지 종료!</p>
                 <p className="text-sm text-gray-600">이 챌린지는 이미 종료되었습니다</p>
-                <button
-                  onClick={() => navigate(`/challenge/${id}/ranking`)}
-                  className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors"
-                >
-                  최종 순위 보기
-                </button>
+                <div className="mt-4 flex flex-col space-y-2">
+                  <button
+                    onClick={() => navigate(`/challenge/${id}/results`)}
+                    className="bg-yellow-600 hover:bg-yellow-700 text-white px-6 py-2 rounded-lg transition-colors font-medium"
+                  >
+                    🏆 최종 결과 보기
+                  </button>
+                  <button
+                    onClick={() => navigate(`/challenge/${id}/ranking`)}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors"
+                  >
+                    상세 순위 보기
+                  </button>
+                </div>
               </div>
             ) : challenge.status === 'planning' ? (
               <div className="text-center py-8 bg-yellow-50 rounded-xl">

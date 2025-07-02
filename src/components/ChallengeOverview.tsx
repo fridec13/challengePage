@@ -441,6 +441,15 @@ const ChallengeOverview = () => {
                   <Trophy className="w-5 h-5 text-orange-600" />
                   <span className="text-gray-700">순위 및 통계</span>
                 </button>
+                {challenge?.status === 'completed' && (
+                  <button 
+                    onClick={() => navigate(`/challenge/${id}/results`)}
+                    className="w-full flex items-center space-x-3 p-3 hover:bg-yellow-50 rounded-lg transition-colors border border-yellow-200"
+                  >
+                    <Trophy className="w-5 h-5 text-yellow-600" />
+                    <span className="text-yellow-700 font-medium">🏆 최종 결과</span>
+                  </button>
+                )}
                 <button 
                   onClick={() => navigate(`/challenge/${id}/rules`)}
                   className="w-full flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg transition-colors"

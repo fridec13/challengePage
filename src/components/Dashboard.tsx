@@ -1,4 +1,4 @@
-import { LogOut, Plus, Users, Play } from 'lucide-react'
+import { LogOut, Plus, Users, Play, Archive, Trophy, Calendar } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { challengeAPI } from '../lib/supabase'
@@ -26,17 +26,34 @@ interface ActiveChallenge {
   end_date: string
 }
 
+interface CompletedChallenge {
+  challenges: {
+    id: string
+    title: string
+    start_date: string
+    end_date: string
+    entry_fee: number
+    max_participants: number
+    users: {
+      nickname: string
+    }
+  }
+}
+
 const Dashboard = () => {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const [activeChallenge, setActiveChallenge] = useState<ActiveChallenge | null>(null)
+  const [completedChallenges, setCompletedChallenges] = useState<CompletedChallenge[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [isLoadingArchive, setIsLoadingArchive] = useState(true)
   
   const userProfile = profileOptions.find(p => p.id === user?.profile_id) || profileOptions[0]
 
   useEffect(() => {
     if (user?.id) {
       loadActiveChallenge()
+      loadCompletedChallenges()
     }
   }, [user])
 
@@ -52,6 +69,21 @@ const Dashboard = () => {
       console.error('활성 챌린지 로드 실패:', error)
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const loadCompletedChallenges = async () => {
+    if (!user?.id) return
+    
+    try {
+      const result = await challengeAPI.getUserCompletedChallenges(user.id)
+      if (result.data) {
+        setCompletedChallenges(result.data)
+      }
+    } catch (error) {
+      console.error('완료된 챌린지 로드 실패:', error)
+    } finally {
+      setIsLoadingArchive(false)
     }
   }
 
@@ -148,6 +180,84 @@ const Dashboard = () => {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* 완료된 챌린지 아카이브 */}
+        <div className="bg-white rounded-2xl shadow-xl p-6 mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-semibold text-gray-800 flex items-center">
+              <Archive className="w-6 h-6 text-gray-600 mr-2" />
+              완료된 챌린지
+            </h2>
+            <span className="text-sm text-gray-500">
+              {completedChallenges.length}개
+            </span>
+          </div>
+          
+          {isLoadingArchive ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+              <p className="text-gray-600">로딩 중...</p>
+            </div>
+          ) : completedChallenges.length > 0 ? (
+            <div className="space-y-4">
+              {completedChallenges.slice(0, 3).map((item) => (
+                <div 
+                  key={item.challenges.id}
+                  onClick={() => navigate(`/challenge/${item.challenges.id}/results`)}
+                  className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg border border-blue-200 cursor-pointer hover:shadow-md transition-all group"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-gray-800 group-hover:text-indigo-600 transition-colors">
+                        {item.challenges.title}
+                      </h3>
+                      <div className="flex items-center space-x-4 text-sm text-gray-600 mt-1">
+                        <div className="flex items-center">
+                          <Calendar className="w-4 h-4 mr-1" />
+                          {new Date(item.challenges.start_date).toLocaleDateString()} ~ 
+                          {new Date(item.challenges.end_date).toLocaleDateString()}
+                        </div>
+                        <div className="flex items-center">
+                          <Users className="w-4 h-4 mr-1" />
+                          최대 {item.challenges.max_participants}명
+                        </div>
+                        <div className="text-green-600 font-medium">
+                          상금: {new Intl.NumberFormat('ko-KR').format(item.challenges.entry_fee)}원
+                        </div>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">
+                        생성자: {item.challenges.users.nickname}
+                      </p>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Trophy className="w-5 h-5 text-yellow-600" />
+                      <span className="text-sm font-medium text-blue-600 group-hover:text-indigo-600">
+                        결과 보기
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              
+              {completedChallenges.length > 3 && (
+                <button
+                  onClick={() => {/* TODO: 전체 아카이브 페이지로 이동 */}}
+                  className="w-full text-center py-3 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 rounded-lg transition-colors"
+                >
+                  더 많은 챌린지 보기 ({completedChallenges.length - 3}개 더)
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <div className="text-gray-400 mb-4">
+                <Archive className="w-16 h-16 mx-auto" />
+              </div>
+              <p className="text-gray-600">아직 완료된 챌린지가 없습니다</p>
+              <p className="text-sm text-gray-500 mt-1">첫 번째 챌린지를 시작해보세요!</p>
+            </div>
+          )}
         </div>
 
         {/* 액션 버튼들 */}
