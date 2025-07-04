@@ -369,6 +369,50 @@ graph TD
 - 점수 계산 불일치의 정확한 원인 파악
 - 다양한 디바이스에서의 UI 정렬 테스트
 
+### ✅ 최근 수정된 버그
+다음 이슈들이 해결되었습니다:
+
+#### 2025년 7월 5일 수정
+- **시간대 불일치 문제 (UTC vs KST)** ✅
+  - 문제: 한국 시간 새벽 2시에 미션 완료 시 전날 지연 입력으로 잘못 기록됨
+  - 원인: 브라우저/Supabase는 UTC 시간, 사용자는 KST 기준으로 인식하는 시간대 불일치
+  - 해결: `koreaTimeUtils` 유틸리티 함수 생성으로 모든 날짜 계산을 한국 시간 기준으로 통일
+  - 기능: `getKoreaToday()`, `getKoreaNow()`, `parseKoreaDate()`, `isSameKoreaDay()` 
+  - 영향: supabase.ts, ChallengeMain.tsx, ChallengeParticipants.tsx, ChallengeOverview.tsx
+
+- **점수 계산 시스템 불일치 및 0점 오류** ✅
+  - 문제: 여러 페이지에서 점수가 0으로 표시되고 계산 결과가 일치하지 않음
+  - 원인: API 호출 시 인자 순서 오류 (`getUserMissionLogs(userId, challengeId)` → `(challengeId, userId)`)
+  - 원인: 일부 컴포넌트에서 자체 점수 계산 로직 사용으로 `ScoringSystem`과 불일치
+  - 해결: 모든 컴포넌트에서 `ScoringSystem` 클래스 사용으로 통일
+  - 해결: API 호출 인자 순서 수정 및 데이터 유효성 검증 로그 추가
+  - 영향: ChallengeParticipants.tsx, ChallengeRanking.tsx, ChallengeResults.tsx
+
+- **새로고침 시 미션 완료 상태 초기화 문제** ✅
+  - 문제: 새로고침 시 완료된 미션이 다시 "미션 완료하기" 버튼으로 표시됨
+  - 원인: 새로고침 시 `user` 정보 로드 전에 미션 로그 조회하여 빈 결과 반환
+  - 해결: `user` 로드 완료 후 개인별 데이터를 별도로 로드하는 `useEffect` 추가
+  - 개선: 디버깅 로그 추가로 로딩 과정 추적 가능
+  - 영향: ChallengeMain.tsx
+
+- **참여자 현황 "최근 7일" 계산 오류** ✅
+  - 문제: "최근 7일"이 챌린지 마지막 7일을 표시하여 직관적이지 않음
+  - 해결: 오늘을 기준으로 한 진짜 최근 7일로 계산 로직 변경
+  - 로직: 진행 중(오늘 기준), 완료됨(마지막 7일), 시작 전(처음 7일)
+  - 영향: ChallengeParticipants.tsx
+
+- **PIN 입력창 가운데 정렬 개선** ✅
+  - 문제: 비밀번호 표시/숨김 아이콘으로 인해 시각적으로 텍스트가 치우쳐 보임
+  - 해결: 아이콘 영역을 제외한 전체 너비 기준으로 가운데 정렬 (`pl-10 pr-10` 패딩 적용)
+  - 영향: LoginForm.tsx, SignupForm.tsx
+
+- **숫자형 미션 업데이트 시 409 Conflict 에러** ✅
+  - 문제: 같은 날짜에 미션 기록 수정 시 `POST 409 (Conflict)` 에러 발생
+  - 원인: 기존 기록 존재 시에도 `insert` 방식 사용으로 중복 생성 시도
+  - 해결: `upsert` 방식으로 변경하여 기존 기록 있으면 업데이트, 없으면 삽입
+  - 개선: UI에서 변경사항 없을 시 버튼 비활성화, 변경 내용 미리보기 추가
+  - 영향: supabase.ts의 `logMission` 함수, ChallengeMain.tsx의 NumberMissionInput
+
 ---
 
 ## 🔮 향후 발전 방향
