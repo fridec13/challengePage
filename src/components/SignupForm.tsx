@@ -239,7 +239,7 @@ const SignupForm = () => {
                   name="pinCode"
                   value={formData.pinCode}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-center text-lg tracking-widest"
+                  className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-center text-lg tracking-widest"
                   placeholder="••••"
                   maxLength={4}
                   required

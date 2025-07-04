@@ -554,18 +554,23 @@ export const missionAPI = {
     return { data, error }
   },
 
-  // 미션 로그 기록
+  // 미션 로그 기록 (업데이트 가능)
   async logMission(logData: Omit<MissionLog, 'id' | 'logged_at'>) {
     // 한국 시간 기준으로 지연 입력 여부 계산
     const koreaToday = koreaTimeUtils.getKoreaToday()
     const isLate = logData.log_date !== koreaToday
 
+    // upsert를 사용하여 기존 기록이 있으면 업데이트, 없으면 삽입
     const { data, error } = await supabase
       .from('mission_logs')
-      .insert([{
+      .upsert([{
         ...logData,
-        is_late: isLate
-      }])
+        is_late: isLate,
+        logged_at: new Date().toISOString() // 업데이트 시에도 새로운 시간으로 설정
+      }], {
+        // user_id, mission_id, log_date 조합으로 중복 판단
+        onConflict: 'user_id,mission_id,log_date'
+      })
       .select()
       .single()
 

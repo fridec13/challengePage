@@ -75,6 +75,32 @@ const ChallengeMain = () => {
     }
   }, [id])
 
+  // user가 로드되었을 때 오늘의 미션 로그를 다시 로드
+  useEffect(() => {
+    const loadUserSpecificData = async () => {
+      if (user?.id && challenge?.id) {
+        console.log('Loading user-specific data for user:', user.id)
+        
+        // 오늘의 미션 로그 로드
+        const logsResult = await missionAPI.getDayMissionLogs(challenge.id, user.id, today)
+        if (logsResult.data) {
+          setTodayLogs(logsResult.data)
+          console.log('Today logs loaded:', logsResult.data)
+        } else {
+          console.log('No logs found for today')
+          setTodayLogs([])
+        }
+
+        // 사용자의 연속 달성일 계산
+        if (missions.length > 0) {
+          await calculateUserStreak(challenge.id, user.id, challenge, missions)
+        }
+      }
+    }
+
+    loadUserSpecificData()
+  }, [user?.id, challenge?.id, missions.length, today])
+
   const loadChallengeData = async () => {
     if (!id) {
       console.error('챌린지 코드가 없습니다')
@@ -109,17 +135,6 @@ const ChallengeMain = () => {
       const participantsResult = await challengeAPI.getChallengeParticipants(challengeData.id)
       if (participantsResult.data) {
         setParticipants(participantsResult.data)
-      }
-
-      // 오늘의 미션 로그 로드
-      if (user?.id) {
-        const logsResult = await missionAPI.getDayMissionLogs(challengeData.id, user.id!, today)
-        if (logsResult.data) {
-          setTodayLogs(logsResult.data)
-        }
-
-        // 사용자의 연속 달성일 계산
-        await calculateUserStreak(challengeData.id, user.id, challengeData, missionsResult.data || [])
       }
 
     } catch (error) {
@@ -648,15 +663,20 @@ const NumberMissionInput = ({
       {/* 제출 버튼 */}
       <button
         onClick={handleSubmit}
-        disabled={value === 0 || isSubmitting}
+        disabled={value === 0 || isSubmitting || (currentValue?.count === value)}
         className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 text-white font-semibold py-4 rounded-xl transition-colors duration-200"
       >
-        {isSubmitting ? '기록 중...' : currentValue ? '기록 업데이트' : '기록하기'}
+        {isSubmitting ? '기록 중...' : 
+         currentValue?.count === value ? '변경사항 없음' :
+         currentValue ? '기록 수정하기' : '기록하기'}
       </button>
 
       {currentValue && (
         <p className="text-center text-sm text-gray-500">
-          현재 기록: {currentValue.count}회
+          {currentValue.count === value ? 
+            `현재 기록: ${currentValue.count}회` :
+            `현재 기록: ${currentValue.count}회 → 새 기록: ${value}회`
+          }
         </p>
       )}
     </div>
