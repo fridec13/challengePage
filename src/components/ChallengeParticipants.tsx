@@ -290,7 +290,30 @@ const ChallengeParticipants = () => {
   )
 
   const dates = getDatesInRange()
-  const visibleDates = selectedDate ? [selectedDate] : dates.slice(-7) // 최근 7일
+  
+  // 오늘을 기준으로 한 최근 7일 계산
+  const getRecentDates = () => {
+    const today = new Date().toISOString().split('T')[0]
+    const todayIndex = dates.indexOf(today)
+    
+    if (todayIndex >= 0) {
+      // 오늘이 챌린지 기간 내에 있는 경우
+      const startIndex = Math.max(0, todayIndex - 6) // 7일 전부터
+      return dates.slice(startIndex, todayIndex + 1)
+    } else {
+      // 오늘이 챌린지 기간을 벗어난 경우
+      const challengeEndDate = challenge?.end_date
+      if (challengeEndDate && today > challengeEndDate) {
+        // 챌린지가 끝난 경우 - 마지막 7일
+        return dates.slice(-7)
+      } else {
+        // 챌린지가 아직 시작 안한 경우 - 처음 7일
+        return dates.slice(0, 7)
+      }
+    }
+  }
+
+  const visibleDates = selectedDate ? [selectedDate] : getRecentDates()
 
   if (isLoading) {
     return (
