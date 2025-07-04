@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Download, Search } from 'lucide-react'
-import { challengeAPI, missionAPI } from '../lib/supabase'
+import { challengeAPI, missionAPI, koreaTimeUtils } from '../lib/supabase'
 import { ScoringSystem } from '../lib/scoring'
 
 interface Challenge {
@@ -153,7 +153,7 @@ const ChallengeParticipants = () => {
         // 연속 달성일 계산
         const sortedDates = Object.keys(dailyProgress).sort()
         let streak = 0
-        const today = new Date().toISOString().split('T')[0]
+        const today = koreaTimeUtils.getKoreaToday()
         
         for (let i = sortedDates.length - 1; i >= 0; i--) {
           const date = sortedDates[i]
@@ -293,7 +293,7 @@ const ChallengeParticipants = () => {
   
   // 오늘을 기준으로 한 최근 7일 계산
   const getRecentDates = () => {
-    const today = new Date().toISOString().split('T')[0]
+    const today = koreaTimeUtils.getKoreaToday()
     const todayIndex = dates.indexOf(today)
     
     if (todayIndex >= 0) {

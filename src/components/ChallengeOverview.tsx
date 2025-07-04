@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Calendar, Users, Target, Flame, TrendingUp, Clock, Settings, BarChart3, Trophy } from 'lucide-react'
-import { challengeAPI, missionAPI } from '../lib/supabase'
+import { challengeAPI, missionAPI, koreaTimeUtils } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { ScoringSystem } from '../lib/scoring'
 
@@ -153,7 +153,7 @@ const ChallengeOverview = () => {
       }, {} as Record<string, MissionLog[]>)
 
       const sortedDates = Object.keys(logsByDate).sort()
-      const today = new Date().toISOString().split('T')[0]
+      const today = koreaTimeUtils.getKoreaToday()
       
       for (let i = sortedDates.length - 1; i >= 0; i--) {
         const date = sortedDates[i]

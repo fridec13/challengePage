@@ -556,11 +556,9 @@ export const missionAPI = {
 
   // 미션 로그 기록
   async logMission(logData: Omit<MissionLog, 'id' | 'logged_at'>) {
-    const currentTime = new Date()
-    const logDate = new Date(logData.log_date)
-    const isLate = currentTime.getDate() !== logDate.getDate() || 
-                   currentTime.getMonth() !== logDate.getMonth() ||
-                   currentTime.getFullYear() !== logDate.getFullYear()
+    // 한국 시간 기준으로 지연 입력 여부 계산
+    const koreaToday = koreaTimeUtils.getKoreaToday()
+    const isLate = logData.log_date !== koreaToday
 
     const { data, error } = await supabase
       .from('mission_logs')
@@ -613,5 +611,41 @@ export const missionAPI = {
       .eq('log_date', date)
 
     return { data, error }
+  }
+}
+
+// 한국 시간 기준 날짜 유틸리티 함수들
+export const koreaTimeUtils = {
+  // 한국 시간 기준 오늘 날짜 (YYYY-MM-DD)
+  getKoreaToday(): string {
+    return new Date().toLocaleDateString('ko-KR', {
+      timeZone: 'Asia/Seoul',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    }).replace(/\. /g, '-').replace('.', '')
+  },
+
+  // 한국 시간 기준 현재 시간
+  getKoreaNow(): Date {
+    return new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Seoul' }))
+  },
+
+  // 날짜 문자열을 한국 시간 기준 Date 객체로 변환
+  parseKoreaDate(dateString: string): Date {
+    return new Date(dateString + 'T00:00:00+09:00')
+  },
+
+  // 두 날짜가 한국 시간 기준으로 같은 날인지 확인
+  isSameKoreaDay(date1: Date | string, date2: Date | string): boolean {
+    const d1 = typeof date1 === 'string' ? this.parseKoreaDate(date1) : date1
+    const d2 = typeof date2 === 'string' ? this.parseKoreaDate(date2) : date2
+    
+    const kd1 = new Date(d1.toLocaleString('en-US', { timeZone: 'Asia/Seoul' }))
+    const kd2 = new Date(d2.toLocaleString('en-US', { timeZone: 'Asia/Seoul' }))
+    
+    return kd1.getFullYear() === kd2.getFullYear() &&
+           kd1.getMonth() === kd2.getMonth() &&
+           kd1.getDate() === kd2.getDate()
   }
 } 

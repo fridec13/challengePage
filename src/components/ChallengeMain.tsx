@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Target, Clock, Flame, Users, CheckCircle, Plus, Minus, BarChart3, Eye, Trophy, ChevronLeft, ChevronRight } from 'lucide-react'
-import { challengeAPI, missionAPI } from '../lib/supabase'
+import { challengeAPI, missionAPI, koreaTimeUtils } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { ScoringSystem } from '../lib/scoring'
 
@@ -67,7 +67,7 @@ const ChallengeMain = () => {
   const [touchStart, setTouchStart] = useState<number | null>(null)
   const [touchEnd, setTouchEnd] = useState<number | null>(null)
 
-  const today = new Date().toISOString().split('T')[0]
+  const today = koreaTimeUtils.getKoreaToday()
 
   useEffect(() => {
     if (id) {
