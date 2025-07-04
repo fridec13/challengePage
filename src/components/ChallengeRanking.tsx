@@ -113,7 +113,7 @@ const ChallengeRanking = () => {
         // 모든 미션 로그 로드
         const allLogs: MissionLog[] = []
         for (const participant of participantsResult.data) {
-          const logsResult = await missionAPI.getUserMissionLogs(participant.user_id, challengeData.id)
+          const logsResult = await missionAPI.getUserMissionLogs(challengeData.id, participant.user_id)
           if (logsResult.data) {
             allLogs.push(...logsResult.data)
           }

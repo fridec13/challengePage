@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Download, Search } from 'lucide-react'
 import { challengeAPI, missionAPI } from '../lib/supabase'
+import { ScoringSystem } from '../lib/scoring'
 
 interface Challenge {
   id: string
@@ -9,6 +10,13 @@ interface Challenge {
   start_date: string
   end_date: string
   status: string
+  scoring_method?: {
+    consistency: number
+    volume: number
+    quality: number
+    streak_bonus: number
+    enable_quality: boolean
+  }
 }
 
 interface Mission {
@@ -42,6 +50,10 @@ interface ParticipantProgress {
   totalCompleted: number
   streak: number
   score: number
+  consistency_score: number
+  volume_score: number
+  quality_score: number
+  completion_rate: number
 }
 
 const ChallengeParticipants = () => {
@@ -122,8 +134,77 @@ const ChallengeParticipants = () => {
   }
 
   const calculateParticipantProgress = () => {
+    if (!challenge?.scoring_method) {
+      console.warn('No scoring method found, using simple calculation')
+      
+      const progress = participants.map(participant => {
+        const userLogs = allLogs.filter(log => log.user_id === participant.user_id)
+        
+        // 날짜별, 미션별로 그룹화
+        const dailyProgress: Record<string, Record<string, MissionLog>> = {}
+        
+        userLogs.forEach(log => {
+          if (!dailyProgress[log.log_date]) {
+            dailyProgress[log.log_date] = {}
+          }
+          dailyProgress[log.log_date][log.mission_id] = log
+        })
+
+        // 연속 달성일 계산
+        const sortedDates = Object.keys(dailyProgress).sort()
+        let streak = 0
+        const today = new Date().toISOString().split('T')[0]
+        
+        for (let i = sortedDates.length - 1; i >= 0; i--) {
+          const date = sortedDates[i]
+          if (date <= today) {
+            const dayLogs = Object.keys(dailyProgress[date])
+            if (dayLogs.length === missions.length) {
+              streak++
+            } else {
+              break
+            }
+          }
+        }
+
+        // 간단한 점수 계산 (fallback)
+        const score = userLogs.length * 10 + streak * 50
+        const completionRate = missions.length > 0 ? 
+          (userLogs.length / (missions.length * Math.max(1, sortedDates.length))) * 100 : 0
+
+        return {
+          participant,
+          dailyProgress,
+          totalCompleted: userLogs.length,
+          streak,
+          score,
+          consistency_score: streak * 10,
+          volume_score: completionRate,
+          quality_score: 0,
+          completion_rate: Math.round(completionRate)
+        }
+      })
+
+      // 점수순으로 정렬
+      progress.sort((a, b) => b.score - a.score)
+      setParticipantProgress(progress)
+      return
+    }
+
+    // ScoringSystem 사용
+    const scoringSystem = new ScoringSystem(
+      missions,
+      challenge.scoring_method,
+      challenge.start_date,
+      challenge.end_date
+    )
+
+    const userIds = participants.map(p => p.user_id)
+    const rankings = scoringSystem.calculateRankings(allLogs, userIds)
+
     const progress = participants.map(participant => {
       const userLogs = allLogs.filter(log => log.user_id === participant.user_id)
+      const userRanking = rankings.find(r => r.user_id === participant.user_id)
       
       // 날짜별, 미션별로 그룹화
       const dailyProgress: Record<string, Record<string, MissionLog>> = {}
@@ -135,32 +216,16 @@ const ChallengeParticipants = () => {
         dailyProgress[log.log_date][log.mission_id] = log
       })
 
-      // 연속 달성일 계산
-      const sortedDates = Object.keys(dailyProgress).sort()
-      let streak = 0
-      const today = new Date().toISOString().split('T')[0]
-      
-      for (let i = sortedDates.length - 1; i >= 0; i--) {
-        const date = sortedDates[i]
-        if (date <= today) {
-          const dayLogs = Object.keys(dailyProgress[date])
-          if (dayLogs.length === missions.length) {
-            streak++
-          } else {
-            break
-          }
-        }
-      }
-
-      // 간단한 점수 계산 (실제로는 scoring_method 적용)
-      const score = userLogs.length * 10 + streak * 50
-
       return {
         participant,
         dailyProgress,
-        totalCompleted: userLogs.length,
-        streak,
-        score
+        totalCompleted: userRanking?.total_completed || userLogs.length,
+        streak: userRanking?.current_streak || 0,
+        score: userRanking?.total_score || 0,
+        consistency_score: userRanking?.consistency_score || 0,
+        volume_score: userRanking?.volume_score || 0,
+        quality_score: userRanking?.quality_score || 0,
+        completion_rate: userRanking?.completion_rate || 0
       }
     })
 

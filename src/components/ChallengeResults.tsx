@@ -89,6 +89,13 @@ const ChallengeResults = () => {
 
       // 점수 계산 및 순위 생성
       if (data.challenge.scoring_method) {
+        console.log('Scoring data:', {
+          missions: data.missions.length,
+          participants: data.participants.length,
+          logs: data.logs.length,
+          scoring_method: data.challenge.scoring_method
+        })
+
         const scoringSystem = new ScoringSystem(
           data.missions,
           data.challenge.scoring_method,
@@ -98,6 +105,8 @@ const ChallengeResults = () => {
 
         const userIds = data.participants.map(p => p.user_id)
         const participantRankings = scoringSystem.calculateRankings(data.logs, userIds)
+
+        console.log('Calculated rankings:', participantRankings)
 
         // 사용자 정보와 매핑
         const enrichedRankings = participantRankings.map(ranking => {
