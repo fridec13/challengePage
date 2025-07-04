@@ -168,36 +168,58 @@ const ChallengeOverview = () => {
       }
     }
 
-    const totalPossibleLogs = calculateTotalPossibleLogs()
-    const successRate = totalPossibleLogs > 0 ? (totalCompleted / totalPossibleLogs) * 100 : 0
+    // 정확한 성공률 계산
+    const successRate = calculateSuccessRate()
 
     return { streak: currentStreak, totalCompleted, successRate: Math.round(successRate) }
   }
 
-  const calculateTotalPossibleLogs = () => {
-    if (!challenge) return 0
+  const calculateSuccessRate = () => {
+    if (!challenge || !missions.length || challenge.status === 'planning') return 0
+
+    // 챌린지 진행 가능한 날짜 범위 계산 (한국 시간 기준)
+    const startDate = koreaTimeUtils.parseKoreaDate(challenge.start_date)
+    const endDate = koreaTimeUtils.parseKoreaDate(challenge.end_date)
+    const today = koreaTimeUtils.getKoreaNow()
     
-    const startDate = new Date(challenge.start_date)
-    const today = new Date()
-    const currentDate = today < new Date(challenge.end_date) ? today : new Date(challenge.end_date)
+    // 실제 진행된 날짜까지만 계산 (오늘까지 또는 챌린지 끝날까지 중 빠른 것)
+    const currentEndDate = today < endDate ? today : endDate
     
-    const daysPassed = Math.max(0, Math.floor((currentDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1)
-    return daysPassed * missions.length
+    // 챌린지가 아직 시작 안했으면 0%
+    if (today < startDate) return 0
+    
+    // 진행된 날짜 수 계산
+    const daysPassed = Math.max(0, Math.floor((currentEndDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1)
+    const totalPossibleMissions = daysPassed * missions.length
+    
+    console.log('성공률 계산:', {
+      startDate: challenge.start_date,
+      today: koreaTimeUtils.getKoreaToday(),
+      daysPassed,
+      missionsPerDay: missions.length,
+      totalPossible: totalPossibleMissions,
+      totalCompleted: myLogs.length,
+      successRate: totalPossibleMissions > 0 ? (myLogs.length / totalPossibleMissions) * 100 : 0
+    })
+    
+    return totalPossibleMissions > 0 ? (myLogs.length / totalPossibleMissions) * 100 : 0
   }
 
   const getDaysRemaining = () => {
     if (!challenge) return 0
-    const today = new Date()
-    const endDate = new Date(challenge.end_date)
+    // 한국 시간 기준으로 계산
+    const today = koreaTimeUtils.getKoreaNow()
+    const endDate = koreaTimeUtils.parseKoreaDate(challenge.end_date)
     const diffTime = endDate.getTime() - today.getTime()
     return Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)))
   }
 
   const getProgressPercentage = () => {
     if (!challenge) return 0
-    const startDate = new Date(challenge.start_date)
-    const endDate = new Date(challenge.end_date)
-    const today = new Date()
+    // 한국 시간 기준으로 계산
+    const startDate = koreaTimeUtils.parseKoreaDate(challenge.start_date)
+    const endDate = koreaTimeUtils.parseKoreaDate(challenge.end_date)
+    const today = koreaTimeUtils.getKoreaNow()
     
     const totalDuration = endDate.getTime() - startDate.getTime()
     const elapsed = today.getTime() - startDate.getTime()
