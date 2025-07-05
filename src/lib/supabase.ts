@@ -4,14 +4,15 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
-console.log('🔧 환경 변수 디버깅:', {
-  hasUrl: !!supabaseUrl,
-  hasKey: !!supabaseKey,
-  urlPreview: supabaseUrl ? `${supabaseUrl.substring(0, 20)}...` : 'undefined',
-  keyPreview: supabaseKey ? `${supabaseKey.substring(0, 20)}...` : 'undefined'
-})
-
-// 환경 변수 확인 완료
+// 개발 모드에서만 환경 변수 디버깅 로그 출력
+if (import.meta.env.DEV) {
+  console.log('🔧 환경 변수 디버깅:', {
+    hasUrl: !!supabaseUrl,
+    hasKey: !!supabaseKey,
+    urlPreview: supabaseUrl ? `${supabaseUrl.substring(0, 20)}...` : 'undefined',
+    keyPreview: supabaseKey ? `${supabaseKey.substring(0, 20)}...` : 'undefined'
+  })
+}
 
 // 환경 변수가 없으면 에러 발생
 if (!supabaseUrl || !supabaseKey) {
