@@ -240,31 +240,52 @@ const ChallengeOverview = () => {
   const getPastDates = () => {
     if (!challenge) return []
     
-    const startDate = koreaTimeUtils.parseKoreaDate(challenge.start_date)
-    const today = koreaTimeUtils.getKoreaNow()
-    const todayString = koreaTimeUtils.getKoreaToday()
+    const startDateString = challenge.start_date  // 예: '2024-07-03'
+    const todayString = koreaTimeUtils.getKoreaToday()  // 예: '2024-07-05'
+    
+    console.log('📅 getPastDates 디버깅:', {
+      challengeStartDate: startDateString,
+      todayString: todayString
+    })
     
     // 챌린지가 아직 시작되지 않았으면 빈 배열 반환
-    if (today <= startDate) {
+    if (startDateString >= todayString) {
+      console.log('❌ 챌린지 아직 시작 안함, 빈 배열 반환')
       return []
     }
     
     const dates = []
-    const currentDate = new Date(startDate)
     
-    // 챌린지 시작일부터 어제까지만 포함 (오늘은 제외)
-    while (true) {
-      const dateString = currentDate.toISOString().split('T')[0]
-      
-      // 오늘 날짜에 도달하면 중단
-      if (dateString >= todayString) {
-        break
-      }
-      
-      dates.push(dateString)
-      currentDate.setDate(currentDate.getDate() + 1)
+    // 날짜 문자열을 직접 조작하여 시간대 문제 해결
+    const addDays = (dateString: string, days: number): string => {
+      const date = new Date(dateString + 'T12:00:00') // 정오로 설정하여 시간대 문제 방지
+      date.setDate(date.getDate() + days)
+      return date.toISOString().split('T')[0]
     }
     
+    // 챌린지 시작일부터 어제까지의 날짜 생성
+    let currentDateString = startDateString
+    let dayCount = 0
+    
+    while (currentDateString < todayString) {
+      console.log('🔍 날짜 추가:', {
+        currentDateString: currentDateString,
+        todayString: todayString,
+        willAdd: true
+      })
+      
+      dates.push(currentDateString)
+      dayCount++
+      currentDateString = addDays(startDateString, dayCount)
+      
+      // 무한 루프 방지 (최대 365일)
+      if (dayCount > 365) {
+        console.warn('⚠️ 날짜 계산 무한 루프 방지')
+        break
+      }
+    }
+    
+    console.log('✅ 최종 과거 날짜 목록:', dates)
     return dates.reverse() // 최신 날짜부터 표시
   }
 
