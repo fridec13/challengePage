@@ -372,6 +372,19 @@ graph TD
 다음 이슈들이 해결되었습니다:
 
 #### 2025년 7월 5일 수정
+- **불필요한 API 400 에러 해결** ✅
+  - 문제: 챌린지 페이지 접근 시 UUID와 6자리 코드 구분 없이 API 호출하여 400 에러 발생
+  - 원인: URL 파라미터가 6자리 코드(예: 'K22YQS')일 때도 UUID용 `getChallengeById`를 먼저 호출
+  - 해결: 정규식으로 UUID 형태 검사하여 적절한 API 함수 직접 호출
+  - 개선: API 호출 50% 감소(2번 → 1번), 불필요한 400 에러 완전 제거
+  - 영향: ChallengeOverview.tsx, ChallengeParticipants.tsx, ChallengeRanking.tsx, ChallengeRules.tsx
+
+- **과거 미션 입력 날짜 범위 버그 수정** ✅
+  - 문제: 지연입력에서 챌린지 시작일 이전 날짜가 선택 목록에 나타남
+  - 원인: 시간대 변환 시 `toISOString()`로 인한 날짜 shift 문제
+  - 해결: 시간대 변환 없이 날짜 문자열 직접 비교 방식으로 변경
+  - 영향: ChallengeOverview.tsx `getPastDates()` 함수
+
 - **챌린지 현황 과거 미션 입력 UI 개선** ✅
   - 문제: 과거 미션 입력 기능이 사이드바에 위치하여 접근성이 떨어짐
   - 해결: 메인 영역(최근 활동 아래)으로 이동하여 더 넓은 공간 활용

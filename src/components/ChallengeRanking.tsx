@@ -82,15 +82,22 @@ const ChallengeRanking = () => {
     
     setIsLoading(true)
     try {
-      // 챌린지 정보 로드
-      let challengeResult = await challengeAPI.getChallengeById(id)
+      // id가 UUID 형태인지 6자리 코드인지 확인하여 적절한 API 호출
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
+      
+      let challengeResult
+      if (isUUID) {
+        // UUID 형태면 ID로 조회
+        challengeResult = await challengeAPI.getChallengeById(id)
+      } else {
+        // 6자리 코드 형태면 코드로 조회
+        challengeResult = await challengeAPI.getChallengeByCode(id)
+      }
       
       if (challengeResult.error || !challengeResult.data) {
-        challengeResult = await challengeAPI.getChallengeByCode(id)
-        if (challengeResult.error || !challengeResult.data) {
-          navigate('/dashboard')
-          return
-        }
+        console.error('챌린지 조회 실패:', challengeResult.error)
+        navigate('/dashboard')
+        return
       }
 
       // 챌린지 자동 종료 체크 및 상태 업데이트
