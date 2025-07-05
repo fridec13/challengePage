@@ -4,11 +4,33 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
+console.log('🔧 환경 변수 디버깅:', {
+  hasUrl: !!supabaseUrl,
+  hasKey: !!supabaseKey,
+  urlPreview: supabaseUrl ? `${supabaseUrl.substring(0, 20)}...` : 'undefined',
+  keyPreview: supabaseKey ? `${supabaseKey.substring(0, 20)}...` : 'undefined'
+})
+
 // 환경 변수 확인 완료
 
 // 환경 변수가 없으면 에러 발생
 if (!supabaseUrl || !supabaseKey) {
-  throw new Error('Missing Supabase environment variables. Please check VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY')
+  console.error('❌ 환경 변수 누락:', {
+    VITE_SUPABASE_URL: supabaseUrl ? '✅ 설정됨' : '❌ 누락',
+    VITE_SUPABASE_ANON_KEY: supabaseKey ? '✅ 설정됨' : '❌ 누락'
+  })
+  throw new Error(`
+    ❌ Supabase 환경 변수가 설정되지 않았습니다.
+    
+    해결 방법:
+    1. 프로젝트 루트에 .env 파일을 생성하세요
+    2. 다음 내용을 추가하세요:
+       VITE_SUPABASE_URL=https://your-project-id.supabase.co
+       VITE_SUPABASE_ANON_KEY=your-anon-key-here
+    3. 개발 서버를 재시작하세요 (npm run dev)
+    
+    Vercel 배포 시에는 환경 변수를 Vercel 대시보드에서 설정해야 합니다.
+  `)
 }
 
 export const supabase = createClient(supabaseUrl, supabaseKey)

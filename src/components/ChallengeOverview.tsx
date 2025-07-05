@@ -243,14 +243,8 @@ const ChallengeOverview = () => {
     const startDateString = challenge.start_date  // 예: '2024-07-03'
     const todayString = koreaTimeUtils.getKoreaToday()  // 예: '2024-07-05'
     
-    console.log('📅 getPastDates 디버깅:', {
-      challengeStartDate: startDateString,
-      todayString: todayString
-    })
-    
     // 챌린지가 아직 시작되지 않았으면 빈 배열 반환
     if (startDateString >= todayString) {
-      console.log('❌ 챌린지 아직 시작 안함, 빈 배열 반환')
       return []
     }
     
@@ -268,24 +262,16 @@ const ChallengeOverview = () => {
     let dayCount = 0
     
     while (currentDateString < todayString) {
-      console.log('🔍 날짜 추가:', {
-        currentDateString: currentDateString,
-        todayString: todayString,
-        willAdd: true
-      })
-      
       dates.push(currentDateString)
       dayCount++
       currentDateString = addDays(startDateString, dayCount)
       
       // 무한 루프 방지 (최대 365일)
       if (dayCount > 365) {
-        console.warn('⚠️ 날짜 계산 무한 루프 방지')
         break
       }
     }
     
-    console.log('✅ 최종 과거 날짜 목록:', dates)
     return dates.reverse() // 최신 날짜부터 표시
   }
 
