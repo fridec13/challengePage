@@ -242,11 +242,26 @@ const ChallengeOverview = () => {
     
     const startDate = koreaTimeUtils.parseKoreaDate(challenge.start_date)
     const today = koreaTimeUtils.getKoreaNow()
-    const dates = []
+    const todayString = koreaTimeUtils.getKoreaToday()
     
+    // 챌린지가 아직 시작되지 않았으면 빈 배열 반환
+    if (today <= startDate) {
+      return []
+    }
+    
+    const dates = []
     const currentDate = new Date(startDate)
-    while (currentDate < today) {
-      dates.push(new Date(currentDate).toISOString().split('T')[0])
+    
+    // 챌린지 시작일부터 어제까지만 포함 (오늘은 제외)
+    while (true) {
+      const dateString = currentDate.toISOString().split('T')[0]
+      
+      // 오늘 날짜에 도달하면 중단
+      if (dateString >= todayString) {
+        break
+      }
+      
+      dates.push(dateString)
       currentDate.setDate(currentDate.getDate() + 1)
     }
     
