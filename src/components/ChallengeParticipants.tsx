@@ -255,12 +255,15 @@ const ChallengeParticipants = () => {
     return emojis[profileId - 1] || '🐱'
   }
 
-  const getMissionStatusIcon = (progress: ParticipantProgress, date: string, missionId: string) => {
+  const getMissionStatusIcon = (progress: ParticipantProgress, date: string, missionId: string, isCompact = false) => {
     const dayProgress = progress.dailyProgress[date]
     const missionLog = dayProgress?.[missionId]
     
+    const iconSize = isCompact ? 'w-5 h-5' : 'w-6 h-6'
+    const textSize = isCompact ? 'text-xs' : 'text-xs'
+    
     if (!missionLog) {
-      return <div className="w-6 h-6 bg-gray-200 rounded-full"></div>
+      return <div className={`${iconSize} bg-gray-200 rounded-full`}></div>
     }
     
     const isLate = missionLog.is_late
@@ -268,7 +271,7 @@ const ChallengeParticipants = () => {
     
     if (mission?.mission_type === 'boolean') {
       return (
-        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold ${
+        <div className={`${iconSize} rounded-full flex items-center justify-center text-white ${textSize} font-bold ${
           isLate ? 'bg-orange-500' : 'bg-green-500'
         }`}>
           ✓
@@ -276,7 +279,7 @@ const ChallengeParticipants = () => {
       )
     } else {
       return (
-        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold ${
+        <div className={`${iconSize} rounded-full flex items-center justify-center text-white ${textSize} font-bold ${
           isLate ? 'bg-orange-500' : 'bg-blue-500'
         }`}>
           {missionLog.value?.count || 0}
@@ -313,7 +316,17 @@ const ChallengeParticipants = () => {
     }
   }
 
-  const visibleDates = selectedDate ? [selectedDate] : getRecentDates()
+  const getVisibleDates = () => {
+    if (!selectedDate) {
+      return getRecentDates() // 기본: 최근 7일
+    } else if (selectedDate === 'all') {
+      return dates // 전체 기간
+    } else {
+      return [selectedDate] // 특정 날짜
+    }
+  }
+
+  const visibleDates = getVisibleDates()
 
   if (isLoading) {
     return (
@@ -392,11 +405,14 @@ const ChallengeParticipants = () => {
                 className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               >
                 <option value="">최근 7일</option>
-                {dates.map(date => (
-                  <option key={date} value={date}>
-                    {new Date(date).toLocaleDateString()}
-                  </option>
-                ))}
+                <option value="all">전체 기간</option>
+                <optgroup label="특정 날짜">
+                  {dates.map(date => (
+                    <option key={date} value={date}>
+                      {new Date(date).toLocaleDateString()}
+                    </option>
+                  ))}
+                </optgroup>
               </select>
             </div>
           </div>
@@ -435,7 +451,17 @@ const ChallengeParticipants = () => {
 
         {/* 진행상황 테이블 */}
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-          <div className="overflow-x-auto">
+          {selectedDate === 'all' && (
+            <div className="px-6 py-3 bg-blue-50 border-b border-blue-200">
+              <div className="flex items-center space-x-2">
+                <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                <span className="text-sm font-medium text-blue-800">
+                  전체 기간 표시 중 ({dates.length}일) • 좌우로 스크롤하여 모든 날짜를 확인하세요
+                </span>
+              </div>
+            </div>
+          )}
+          <div className={`overflow-x-auto ${selectedDate === 'all' ? 'max-h-96 overflow-y-auto' : ''}`}>
             <table className="w-full">
               <thead className="bg-gray-50">
                 <tr>
@@ -452,9 +478,13 @@ const ChallengeParticipants = () => {
                     연속
                   </th>
                   {visibleDates.map(date => (
-                    <th key={date} className="px-2 py-4 text-center text-xs font-semibold text-gray-700 border-r border-gray-200 min-w-20">
+                    <th key={date} className={`px-2 py-4 text-center text-xs font-semibold text-gray-700 border-r border-gray-200 ${
+                      selectedDate === 'all' ? 'min-w-12' : 'min-w-20'
+                    }`}>
                       <div>{new Date(date).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })}</div>
-                      <div className="text-gray-500">{new Date(date).toLocaleDateString('ko-KR', { weekday: 'short' })}</div>
+                      {selectedDate !== 'all' && (
+                        <div className="text-gray-500">{new Date(date).toLocaleDateString('ko-KR', { weekday: 'short' })}</div>
+                      )}
                     </th>
                   ))}
                 </tr>
@@ -486,11 +516,15 @@ const ChallengeParticipants = () => {
                       <span className="font-semibold text-orange-600">{progress.streak}일</span>
                     </td>
                     {visibleDates.map(date => (
-                      <td key={date} className="px-2 py-4 border-r border-gray-200">
-                        <div className="flex flex-col items-center space-y-1">
+                      <td key={date} className={`border-r border-gray-200 ${
+                        selectedDate === 'all' ? 'px-1 py-2' : 'px-2 py-4'
+                      }`}>
+                        <div className={`flex flex-col items-center ${
+                          selectedDate === 'all' ? 'space-y-0.5' : 'space-y-1'
+                        }`}>
                           {missions.map(mission => (
                             <div key={mission.id} title={mission.title}>
-                              {getMissionStatusIcon(progress, date, mission.id)}
+                              {getMissionStatusIcon(progress, date, mission.id, selectedDate === 'all')}
                             </div>
                           ))}
                         </div>
@@ -508,19 +542,19 @@ const ChallengeParticipants = () => {
           <h3 className="text-lg font-semibold text-gray-800 mb-4">범례</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="flex items-center space-x-2">
-              <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-white text-xs">✓</div>
+              <div className={`bg-green-500 rounded-full flex items-center justify-center text-white text-xs ${selectedDate === 'all' ? 'w-5 h-5' : 'w-6 h-6'}`}>✓</div>
               <span className="text-sm text-gray-600">완료형 미션 (정시)</span>
             </div>
             <div className="flex items-center space-x-2">
-              <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center text-white text-xs">✓</div>
+              <div className={`bg-orange-500 rounded-full flex items-center justify-center text-white text-xs ${selectedDate === 'all' ? 'w-5 h-5' : 'w-6 h-6'}`}>✓</div>
               <span className="text-sm text-gray-600">완료형 미션 (지연)</span>
             </div>
             <div className="flex items-center space-x-2">
-              <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold">5</div>
+              <div className={`bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold ${selectedDate === 'all' ? 'w-5 h-5' : 'w-6 h-6'}`}>5</div>
               <span className="text-sm text-gray-600">숫자형 미션 (정시)</span>
             </div>
             <div className="flex items-center space-x-2">
-              <div className="w-6 h-6 bg-gray-200 rounded-full"></div>
+              <div className={`bg-gray-200 rounded-full ${selectedDate === 'all' ? 'w-5 h-5' : 'w-6 h-6'}`}></div>
               <span className="text-sm text-gray-600">미완료</span>
             </div>
           </div>

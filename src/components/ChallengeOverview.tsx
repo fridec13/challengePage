@@ -31,6 +31,7 @@ interface Mission {
   title: string
   description?: string
   mission_type: 'boolean' | 'number'
+  input_restriction: 'same_day_only' | 'flexible'
   success_conditions?: string
   order_index: number
 }
@@ -66,6 +67,11 @@ const ChallengeOverview = () => {
   const [participants, setParticipants] = useState<Participant[]>([])
   const [myLogs, setMyLogs] = useState<MissionLog[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [showMissionForm, setShowMissionForm] = useState(false)
+  const [selectedMission, setSelectedMission] = useState<Mission | null>(null)
+  const [selectedDate, setSelectedDate] = useState('')
+  const [missionValue, setMissionValue] = useState<any>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
     if (id) {
@@ -225,6 +231,87 @@ const ChallengeOverview = () => {
     const elapsed = today.getTime() - startDate.getTime()
     
     return Math.min(Math.max((elapsed / totalDuration) * 100, 0), 100)
+  }
+
+  const getFlexibleMissions = () => {
+    return missions.filter(mission => mission.input_restriction === 'flexible')
+  }
+
+  const getPastDates = () => {
+    if (!challenge) return []
+    
+    const startDate = koreaTimeUtils.parseKoreaDate(challenge.start_date)
+    const today = koreaTimeUtils.getKoreaNow()
+    const dates = []
+    
+    const currentDate = new Date(startDate)
+    while (currentDate < today) {
+      dates.push(new Date(currentDate).toISOString().split('T')[0])
+      currentDate.setDate(currentDate.getDate() + 1)
+    }
+    
+    return dates.reverse() // 최신 날짜부터 표시
+  }
+
+  const hasLogForDate = (missionId: string, date: string) => {
+    return myLogs.some(log => log.mission_id === missionId && log.log_date === date)
+  }
+
+  const handleMissionSubmit = async () => {
+    if (!selectedMission || !selectedDate || !challenge || !user?.id) return
+    
+    if (hasLogForDate(selectedMission.id, selectedDate)) {
+      alert('이미 해당 날짜에 미션을 완료했습니다.')
+      return
+    }
+    
+    setIsSubmitting(true)
+    
+    try {
+      const logData = {
+        mission_id: selectedMission.id,
+        user_id: user.id,
+        challenge_id: challenge.id,
+        log_date: selectedDate,
+        value: selectedMission.mission_type === 'boolean' 
+          ? { completed: true }
+          : { count: missionValue || 0 },
+        is_late: true // 지연입력은 항상 is_late true
+      }
+      
+      const result = await missionAPI.logMission(logData)
+      
+      if (result.error) {
+        throw new Error(result.error.message)
+      }
+      
+      // 성공 시 로그 목록 새로고침
+      const logsResult = await missionAPI.getUserMissionLogs(challenge.id, user.id)
+      if (logsResult.data) {
+        setMyLogs(logsResult.data)
+      }
+      
+      // 폼 초기화
+      setShowMissionForm(false)
+      setSelectedMission(null)
+      setSelectedDate('')
+      setMissionValue(null)
+      
+      alert('미션이 성공적으로 기록되었습니다!')
+      
+    } catch (error) {
+      console.error('미션 기록 실패:', error)
+      alert('미션 기록에 실패했습니다. 다시 시도해주세요.')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const openMissionForm = (mission: Mission) => {
+    setSelectedMission(mission)
+    setShowMissionForm(true)
+    setSelectedDate('')
+    setMissionValue(mission.mission_type === 'boolean' ? true : 0)
   }
 
   if (isLoading) {
@@ -418,11 +505,18 @@ const ChallengeOverview = () => {
                   <div key={mission.id} className="p-3 border border-gray-200 rounded-lg">
                     <div className="flex items-center justify-between mb-1">
                       <h4 className="font-medium text-gray-800">{mission.title}</h4>
-                      <span className={`text-xs px-2 py-1 rounded ${
-                        mission.mission_type === 'boolean' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
-                      }`}>
-                        {mission.mission_type === 'boolean' ? '완료형' : '숫자형'}
-                      </span>
+                      <div className="flex items-center space-x-2">
+                        <span className={`text-xs px-2 py-1 rounded ${
+                          mission.mission_type === 'boolean' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
+                        }`}>
+                          {mission.mission_type === 'boolean' ? '완료형' : '숫자형'}
+                        </span>
+                        {mission.input_restriction === 'flexible' && (
+                          <span className="text-xs px-2 py-1 rounded bg-orange-100 text-orange-800">
+                            지연입력 가능
+                          </span>
+                        )}
+                      </div>
                     </div>
                     {mission.description && (
                       <p className="text-sm text-gray-600 mb-2">{mission.description}</p>
@@ -436,6 +530,104 @@ const ChallengeOverview = () => {
                 ))}
               </div>
             </div>
+
+            {/* 과거 미션 입력 */}
+            {getFlexibleMissions().length > 0 && (
+              <div className="bg-white rounded-2xl shadow-lg p-6">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">과거 미션 입력</h3>
+                <p className="text-sm text-gray-600 mb-4">지연입력 가능한 미션을 과거 날짜에 기록할 수 있습니다.</p>
+                
+                <div className="space-y-3">
+                  {getFlexibleMissions().map((mission) => (
+                    <div key={mission.id} className="p-3 border border-orange-200 rounded-lg bg-orange-50">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="font-medium text-gray-800">{mission.title}</h4>
+                          <p className="text-sm text-gray-600">{mission.description}</p>
+                        </div>
+                        <button
+                          onClick={() => openMissionForm(mission)}
+                          className="px-3 py-1 bg-orange-600 hover:bg-orange-700 text-white text-sm rounded-lg transition-colors"
+                        >
+                          기록하기
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 미션 입력 모달 */}
+            {showMissionForm && selectedMission && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                    과거 미션 입력: {selectedMission.title}
+                  </h3>
+                  
+                  <div className="space-y-4">
+                    {/* 날짜 선택 */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        날짜 선택
+                      </label>
+                      <select
+                        value={selectedDate}
+                        onChange={(e) => setSelectedDate(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      >
+                        <option value="">날짜를 선택하세요</option>
+                        {getPastDates().map((date) => (
+                          <option
+                            key={date}
+                            value={date}
+                            disabled={hasLogForDate(selectedMission.id, date)}
+                          >
+                            {new Date(date).toLocaleDateString('ko-KR')}
+                            {hasLogForDate(selectedMission.id, date) && ' (완료됨)'}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* 미션 값 입력 */}
+                    {selectedMission.mission_type === 'number' && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          수량 입력
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          value={missionValue || ''}
+                          onChange={(e) => setMissionValue(parseInt(e.target.value) || 0)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                          placeholder="수량을 입력하세요"
+                        />
+                      </div>
+                    )}
+
+                    {/* 버튼 */}
+                    <div className="flex space-x-3">
+                      <button
+                        onClick={() => setShowMissionForm(false)}
+                        className="flex-1 px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-colors"
+                      >
+                        취소
+                      </button>
+                      <button
+                        onClick={handleMissionSubmit}
+                        disabled={!selectedDate || isSubmitting}
+                        className="flex-1 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isSubmitting ? '기록 중...' : '기록하기'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* 상금 정보 */}
             <div className="bg-white rounded-2xl shadow-lg p-6">
