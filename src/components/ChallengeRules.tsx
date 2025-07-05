@@ -23,7 +23,7 @@ interface Challenge {
     streak_bonus: number
     enable_quality: boolean
   }
-  prize_distribution: Record<string, number>
+  prize_distribution: number[] | Record<string, number>
 }
 
 interface Mission {
@@ -396,27 +396,51 @@ const ChallengeRules = () => {
             <div className="border border-gray-200 rounded-lg p-4">
               <h5 className="font-semibold text-gray-800 mb-3">순위별 배분</h5>
               <div className="space-y-2">
-                {Object.entries(challenge.prize_distribution).map(([rank, percentage]) => {
-                  const amount = Math.floor(getTotalPrizePool() * (Number(percentage) / 100))
-                  return (
-                    <div key={rank} className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold ${
-                          rank === '1' ? 'bg-yellow-500' :
-                          rank === '2' ? 'bg-gray-400' :
-                          rank === '3' ? 'bg-amber-600' : 'bg-gray-300'
-                        }`}>
-                          {rank}
+                {Array.isArray(challenge.prize_distribution) 
+                  ? challenge.prize_distribution.map((percentage, index) => {
+                      const rank = index + 1
+                      const amount = Math.floor(getTotalPrizePool() * (percentage / 100))
+                      return (
+                        <div key={rank} className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2">
+                            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold ${
+                              rank === 1 ? 'bg-yellow-500' :
+                              rank === 2 ? 'bg-gray-400' :
+                              rank === 3 ? 'bg-amber-600' : 'bg-gray-300'
+                            }`}>
+                              {rank}
+                            </div>
+                            <span className="font-medium">{rank}등</span>
+                          </div>
+                          <div className="text-right">
+                            <div className="font-semibold">{amount.toLocaleString()}원</div>
+                            <div className="text-xs text-gray-500">{percentage}%</div>
+                          </div>
                         </div>
-                        <span className="font-medium">{rank}등</span>
-                      </div>
-                      <div className="text-right">
-                        <div className="font-semibold">{amount.toLocaleString()}원</div>
-                        <div className="text-xs text-gray-500">{percentage}%</div>
-                      </div>
-                    </div>
-                  )
-                })}
+                      )
+                    })
+                  : Object.entries(challenge.prize_distribution).map(([rank, percentage]) => {
+                      const amount = Math.floor(getTotalPrizePool() * (Number(percentage) / 100))
+                      return (
+                        <div key={rank} className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2">
+                            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold ${
+                              rank === '1' ? 'bg-yellow-500' :
+                              rank === '2' ? 'bg-gray-400' :
+                              rank === '3' ? 'bg-amber-600' : 'bg-gray-300'
+                            }`}>
+                              {rank}
+                            </div>
+                            <span className="font-medium">{rank}등</span>
+                          </div>
+                          <div className="text-right">
+                            <div className="font-semibold">{amount.toLocaleString()}원</div>
+                            <div className="text-xs text-gray-500">{percentage}%</div>
+                          </div>
+                        </div>
+                      )
+                    })
+                }
               </div>
             </div>
           </div>

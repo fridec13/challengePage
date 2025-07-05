@@ -175,9 +175,9 @@ const ChallengeRanking = () => {
   }
 
   const calculatePrizeAmount = (rank: number) => {
-    if (!challenge) return 0
+    if (!challenge || !Array.isArray(challenge.prize_distribution)) return 0
     const totalPool = challenge.entry_fee * participants.length
-    const percentage = challenge.prize_distribution[rank.toString()] || 0
+    const percentage = challenge.prize_distribution[rank - 1] || 0
     return Math.floor(totalPool * (percentage / 100))
   }
 

@@ -175,7 +175,7 @@ const ChallengeResults = () => {
     
     return rankings.map((ranking, index) => {
       const rank = index + 1
-      const percentage = distribution[`rank${rank}`] || 0
+      const percentage = Array.isArray(distribution) ? distribution[rank - 1] || 0 : distribution[`rank${rank}`] || 0
       const prize = Math.floor(totalPrize * percentage / 100)
       
       return {

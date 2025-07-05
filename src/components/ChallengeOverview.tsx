@@ -453,12 +453,19 @@ const ChallengeOverview = () => {
                 </div>
                 <div className="pt-3 border-t border-gray-200">
                   <p className="text-sm text-gray-500 mb-2">순위별 배분</p>
-                  {challenge.prize_distribution && Object.entries(challenge.prize_distribution).map(([rank, percentage]) => (
-                    <div key={rank} className="flex justify-between text-sm">
-                      <span>{rank}등</span>
-                      <span>{String(percentage)}%</span>
-                    </div>
-                  ))}
+                  {challenge.prize_distribution && Array.isArray(challenge.prize_distribution) && challenge.prize_distribution.map((percentage, index) => {
+                    const rank = index + 1
+                    const amount = Math.floor((challenge.entry_fee * participants.length) * (percentage / 100))
+                    return (
+                      <div key={rank} className="flex justify-between text-sm">
+                        <span>{rank}등</span>
+                        <div className="text-right">
+                          <span className="font-semibold">{amount.toLocaleString()}원</span>
+                          <span className="text-gray-500 ml-2">({percentage}%)</span>
+                        </div>
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
             </div>
